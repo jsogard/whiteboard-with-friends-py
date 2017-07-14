@@ -11,7 +11,7 @@ ON_LOCAL = ('DATABASE_URL' not in os.environ)
 if not ON_LOCAL:
 	#urlparse.uses_netloc.append("postgres")
 	url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-	url.netloc += "postgres" # ?? does this work ??
+	#url.netloc += "postgres" # ?? does this work ?? not it does not
 	conn = psycopg2.connect(
 		database=url.path[1:],
 		user=url.username,
@@ -21,7 +21,7 @@ if not ON_LOCAL:
 	)
 else:
 	app.config.update(dict(
-		DATABASE=os.path.join(app.root_path, 'app.db'),
+		DATABASE=os.path.join(app.root_path, 'whiteboard.db'),
 		SECRET_KEY='development key',
 		USERNAME='admin',
 		PASSWORD='default'
