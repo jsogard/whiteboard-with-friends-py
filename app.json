@@ -1,12 +1,12 @@
-{
-  "name": "Flask Heroku Sample",
-  "description": "A sample Flask app on Heroku",
+ {
+  "name": "Heroku Flask Social Whiteboard App",
+  "description": "A social Flask app on Heroku",
   "keywords": [
     "flask",
     "python",
     "sample"
   ],
-  "repository": "https://github.com/yefim/flask-heroku-sample",
+  "repository": "https://github.com/jsogard/whiteboard-with-friends-py",
   "addons": [
     "heroku-postgresql"
   ]
