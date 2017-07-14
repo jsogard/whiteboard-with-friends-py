@@ -44,7 +44,7 @@ def logout():
 
 @app.route('/', methods=['GET'])
 def index():
-	#print('you are working on %s' % 'local' if ON_LOCAL else 'heroku')
+	print('you are working on %s' % 'local' if ON_LOCAL else 'heroku')
 	if not session.get('logged_in'):
 		return redirect(url_for('login'))
 	return render_template('index.html')
