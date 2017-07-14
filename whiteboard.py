@@ -10,7 +10,7 @@ ON_LOCAL = ('DATABASE_URL' not in os.environ)
 
 if not ON_LOCAL:
 	#urlparse.uses_netloc.append("postgres")
-	url = urllib.parse(os.environ["DATABASE_URL"])
+	url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
 	url.netloc += "postgres" # ?? does this work ??
 	conn = psycopg2.connect(
 		database=url.path[1:],
