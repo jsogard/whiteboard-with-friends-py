@@ -3,7 +3,8 @@ import psycopg2
 import sqlite3
 import urllib
 import hashlib
-from flask import Flask, render_template, request, redirect, url_for, g, session
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, Response
 
 ''' ================== '''
 '''   CONFIGURATION    '''
@@ -29,12 +30,32 @@ else:
 	app.config.update(dict(
 		DATABASE=os.path.join(app.root_path, 'whiteboard.db'),
 		SECRET_KEY='development key',
-		USERNAME='admin',
-		PASSWORD='default'
+		USERNAME='admin_joe',
+		PASSWORD='04161996'
 	))
 
-with app.app_context():
-	init_db()
+''' ================== '''
+'''   AUTHENTICATION   '''
+''' ================== '''
+
+def check_auth(username, password):
+    return username == app.config['USERNAME'] and password == app.config['PASSWORD']
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
 
 ''' ================== '''
 '''      DB STUFF      '''
@@ -68,19 +89,32 @@ def init_db():
 			db.cursor().executescript(f.read())
 		db.commit()
 
+with app.app_context():
+	init_db()
 
 ''' ================== '''
-'''      API ISH       '''
+'''      ROUTING       '''
 ''' ================== '''
 
 @app.route('/login', methods=['GET','POST'])
 def login():
 	error = None
 	if request.method == 'POST':
-		if request.form['username'] == 'admin' and request.form['password'] == 'admin':
-			session['logged_in'] = True
-			return redirect(url_for('index'))
-		error = "Invalid username or password"
+		if request.form['username'] == '' or request.form['password'] == '':
+			error = "Empty fields"
+		else:
+			pwd = query_select("SELECT password FROM User WHERE username=(?) LIMIT 1", (request.form['username'], ) )
+			if len(pwd) == 0:
+				error = 'Incorrect username'
+			else:
+				pwd = pwd[0]['password']
+				m = hashlib.sha256()
+				m.update(request.form['password'].encode('utf-8'))
+				if pwd != m.hexdigest():
+					error = 'Incorrect password'
+				else:
+					session['logged_in'] = True
+					return redirect(url_for('index'))
 	return render_template('login.html', error = error)
 
 @app.route('/logout', methods=['GET'])
@@ -88,21 +122,54 @@ def logout():
 	session.pop('logged_in', None)
 	return redirect(url_for('login'))
 
+@app.route('/signup', methods=['GET','POST'])
+def signup():
+	error = None
+	if request.method == 'POST':
+		if request.form['username'] == '' or request.form['password'] == '':
+			error = 'Empty field'
+		elif request.form['password'] != request.form['confirm']:
+			error = 'Password does not match'
+		else:
+			names = query_select("SELECT username FROM User WHERE username=(?) LIMIT 1", (request.form['username'], ) )
+			if len(names) > 0:
+				error = 'Username taken'
+			else:
+				m = hashlib.sha256()
+				m.update(request.form['password'].encode('utf-8'))
+				query_update("INSERT INTO User (username, password) VALUES (?, ?)",
+					(request.form['username'], m.hexdigest()))
+				session['logged_in'] = True
+				return redirect(url_for('index'))
+	return render_template('signup.html',  error = error)
+
 @app.route('/', methods=['GET'])
 def index():
-	print('you are working on %s' % 'local' if ON_LOCAL else 'heroku')
-	if not session.get('logged_in'):
+	#print('you are working on %s' % 'local' if ON_LOCAL else 'heroku')
+	if not 'logged_in' in session:
 		return redirect(url_for('login'))
-	return render_template('index.html')
+	return render_template('dashboard.html')
+
+''' ================== '''
+'''      API ISH       '''
+''' ================== '''
+
+@app.route('/user', methods=['GET'])
+def getUsers():
+	return jsonify(query_select("SELECT * FROM User"))
+
 
 ''' ================== '''
 '''   HELPER METHODS   '''
 ''' ================== '''
 
-def query_select(query_str, query_variables):
+def query_select(query_str, query_variables=None):
 	if ON_LOCAL:
 		db = get_db()
-		cur = db.execute(query_str, query_variables)
+		if query_variables == None:
+			cur = db.execute(query_str)
+		else:	
+			cur = db.execute(query_str, query_variables)
 		row_list = cur.fetchall()
 		data = []
 		for row in row_list:
@@ -110,8 +177,17 @@ def query_select(query_str, query_variables):
 			for key in row.keys():
 				item[key] = row[key]
 			data.insert(0, item)
-		print data
+		print(data)
 		return data
+
+def query_update(query_str, query_variables=None):
+	if ON_LOCAL:
+		db = get_db()
+		if query_variables == None:
+			db.execute(query_str)
+		else:
+			db.execute(query_str, query_variables)
+		db.commit()
 
 
 ''' ================== '''
