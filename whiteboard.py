@@ -89,8 +89,17 @@ def init_db():
 			db.cursor().executescript(f.read())
 		db.commit()
 
+def populate_db():
+	## populates mock data on local ##
+	if ON_LOCAL:
+		db = get_db()
+		with app.open_resource('populate.sql', mode='r') as f:
+			db.cursor().executescript(f.read())
+		db.commit()
+
 with app.app_context():
 	init_db()
+	populate_db()
 
 ''' ================== '''
 '''      ROUTING       '''
@@ -103,10 +112,11 @@ def login():
 		if request.form['username'] == '' or request.form['password'] == '':
 			error = "Empty fields"
 		else:
-			pwd = query_select("SELECT password FROM User WHERE username=(?) LIMIT 1", (request.form['username'], ) )
+			pwd = query_select("SELECT password, id FROM User WHERE username=(?) LIMIT 1", (request.form['username'], ) )
 			if len(pwd) == 0:
 				error = 'Incorrect username'
 			else:
+				uid = pwd[0]['id']
 				pwd = pwd[0]['password']
 				m = hashlib.sha256()
 				m.update(request.form['password'].encode('utf-8'))
@@ -114,12 +124,16 @@ def login():
 					error = 'Incorrect password'
 				else:
 					session['logged_in'] = True
+					session['id'] = uid
+					session['username'] = request.form['username']
 					return redirect(url_for('index'))
 	return render_template('login.html', error = error)
 
 @app.route('/logout', methods=['GET'])
 def logout():
 	session.pop('logged_in', None)
+	session.pop('id', None)
+	session.pop('username', None)
 	return redirect(url_for('login'))
 
 @app.route('/signup', methods=['GET','POST'])
@@ -140,6 +154,8 @@ def signup():
 				query_update("INSERT INTO User (username, password) VALUES (?, ?)",
 					(request.form['username'], m.hexdigest()))
 				session['logged_in'] = True
+				session['id'] = uid
+				session['username'] = request.form['username']
 				return redirect(url_for('index'))
 	return render_template('signup.html',  error = error)
 
@@ -157,6 +173,19 @@ def index():
 @app.route('/user', methods=['GET'])
 def getUsers():
 	return jsonify(query_select("SELECT * FROM User"))
+
+@app.route('/board', methods=['GET'])
+def getBoards():
+	if 'logged_in' in session:
+		return getUserBoards(session['id'])
+	return jsonify(query_select("SELECT * FROM Board"))
+
+@app.route('/board/user/<int:uid>', methods=['GET'])
+def getUserBoards(uid):
+	return jsonify(query_select("""SELECT b.id, b.name, b.lastModified, u.username
+							 FROM Board AS b, User AS u
+							 WHERE u.id = (?)
+							 AND u.id = b.userId""", (uid,)))
 
 
 ''' ================== '''
@@ -177,7 +206,6 @@ def query_select(query_str, query_variables=None):
 			for key in row.keys():
 				item[key] = row[key]
 			data.insert(0, item)
-		print(data)
 		return data
 
 def query_update(query_str, query_variables=None):
