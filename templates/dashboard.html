@@ -35,12 +35,12 @@ $(document).ready(function(){
 		boardObj.append( $("<hr>") );
 		boardObj.append( $("<img>").attr("src", "/static/img/sad.svg") );
 		boardObj.click(function(){
-			var href = 'url_for("draw", boardId=' + data.id + ')';
-			href = '{' + href + '}';
-			href = '{' + href + '}'; // really really stupid workaround that might be stupidly necessary
-			console.log(href);
-			console.log(data.id);
-			//window.location.href = href;
+			// var href = 'url_for("draw", boardId=' + data.id + ')';
+			// href = '{' + href + '}';
+			// href = '{' + href + '}'; // really really stupid workaround that might be stupidly necessary
+			// console.log(href);
+			// console.log(data.id);
+			window.location.href = '/draw/' + data.id;
 		});
 		return boardObj;
 	}

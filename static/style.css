@@ -44,3 +44,11 @@ h2              { font-size: 1.2em; }
 	border-color: #aaa;
 	border-radius: 10px;
 }
+
+#draw-content {
+	text-align: center;
+}
+
+canvas {
+	border: 1px solid black;
+}

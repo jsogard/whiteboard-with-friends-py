@@ -166,12 +166,12 @@ def index():
 		return redirect(url_for('login'))
 	return render_template('dashboard.html')
 
-@app.route('/draw/<boardId>', methods=['GET'])
+@app.route('/draw/<int:boardId>', methods=['GET'])
 def draw(boardId):
 	if not 'logged_in' in session:
 		return redirect(url_for('login'))
 	# TODO chekc permissions and send away bad guys
-	return jsonify(query_select("SELECT * FROM Board WHERE id = (?)", (boardId,) ))
+	return render_template('draw.html')
 
 ''' ================== '''
 '''      API ISH       '''

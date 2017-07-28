@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div id="draw-content">
+
+	<canvas id="mainCanvas" width="640" height="480"></canvas>
+		
+	<canvas id="servedBuffer" width="128" height="128" style="display:none;"></canvas>
+
+	<span id="tools">
+		<div class="tools">
+			<h2>Tools</h2>
+			<table>
+				<tr>
+					<th>Shape</th>
+					<th>Color</th>
+					<th>Size</th>
+					<th>Transparency</th>
+					<th>Preview</th>
+				</tr>
+				<tr>
+					<td><img id="shape" src="{{ url_for('static', filename='brushes/hard.png') }}"></td>
+					<td><input id="colorPicker" type="text" value="#3e86fa"/></td>
+					<td><input id="size" type="range" min="1" max="128" value="64"/></td>
+					<td><input id="opacity" type="range" min="0.01" max="1" step="0.01" value="100"/></td>
+					<td><canvas id="localBuffer" width="128" height="128"></canvas></td>
+				</tr>
+			</table>
+			<div id="brushes">
+				<img src="{{ url_for('static', filename='brushes/hard.png') }}">
+				<img src="{{ url_for('static', filename='brushes/soft.png') }}">
+				<img src="{{ url_for('static', filename='brushes/angled.png') }}">
+				<img src="{{ url_for('static', filename='brushes/rough.png') }}">
+			</div>
+			
+			
+			
+		</div>
+	</span>
+</div>
+
+<script src="{{ url_for('static', filename='spectrum/spectrum.js') }}"></script>
+<link rel='stylesheet' href="{{ url_for('static', filename='spectrum/spectrum.css') }}"/>
+<script type="text/javascript" src="{{ url_for('static', filename='drawing.js') }}">
+
+
+/*
+
+$(document).ready(function(){
+
+	var brush_size = 20;
+	var brush_color = "#000000";
+
+	var canvas = document.getElementById("canvas");
+	var ctx = canvas.getContext('2d');
+	var brush_stroke = new Image();
+	brush_stroke.src = "/static/img/brush.svg";
+
+	var BrushStroke = function(bsShape, bsColor, bsSize, bsOpacity, bsPath){
+		this.shape = bsShape;
+		this.color = bsColor;
+		this.size = bsSize;
+		this.opacity = bsOpacity;
+		this.path = bsPath;
+	}
+
+	// BRUSH AND BUFFERS
+	var localbi = new Image(); //buffer brush image
+	var localbc = $("#localBuffer")[0]; //buffer canvas (gets drawn)
+	var localbx = localbc.getContext('2d'); //buffer context
+	localbi.onload = function(){bufferBrush(null)};
+	var servedbi = new Image();
+	var servedbc = $("#servedBuffer")[0];
+	var servedbx = servedbc.getContext('2d');
+	servedbi.onload = null;//function(){console.log("served brush image loaded " + servedbi.src);};
+	
+	function hexToRgb(hex){
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+			r: parseInt(result[1], 16),
+			g: parseInt(result[2], 16),
+			b: parseInt(result[3], 16)
+		} : null;
+	}
+	function bufferBrush(bs){
+		var useBrush = localbi;
+		var useContext = localbx;
+		var useSize = size;
+		var useColor = color;
+		var useOpacity = opacity;
+		if(bs != null){
+			useBrush = servedbi;
+			useContext = servedbx;
+			useSize = bs.size;
+			useOpacity = bs.opacity;
+			useColor = bs.color;
+		}
+		useContext.clearRect(0, 0, 128, 128);
+		useContext.drawImage(useBrush, 64-useSize/2, 64-useSize/2, useSize, useSize);
+		var imageData = useContext.getImageData(0, 0, 128, 128);
+		var pixels = imageData.data;
+		var rgb = hexToRgb(useColor);
+		for(var i = 0; i < pixels.length; i=i+4){
+			pixels[i  ] = pixels[i  ] * rgb.r /255; // r
+			pixels[i+1] = pixels[i+1] * rgb.g /255; // g
+			pixels[i+2] = pixels[i+2] * rgb.b /255; // b
+			pixels[i+3] = pixels[i+3] * useOpacity;
+			
+		}
+		console.log("Buffered brush " + useSize + "px " + useColor + " " + (100*useOpacity) + "% ");
+		imageData.data = pixels;
+		useContext.putImageData(imageData, 0, 0);
+	}
+
+	function getMousePos(event){
+		var rect = canvas.getBoundingClientRect();
+		return  {
+					x: event.clientX - rect.left,
+					y: event.clientY - rect.top
+				};
+	}
+
+	function pushPath(xy){
+		path.push(loc.x);
+		path.push(loc.y);
+	}
+
+	function draw(xy){
+		ctx.drawImage(brush_stroke, xy.x, xy.y);
+	}
+
+	function changeBrushColor(hex){
+		return;
+	}
+
+	var path = null;
+	var mousedown = false;
+	var buffer_reset = 5;
+	var buffer = 0;
+
+	$(canvas).mousedown(function(event){
+		mousedown = true;
+		buffer = buffer_reset;
+		path = [];
+		xy 
+		pushPath(event);
+	});
+
+	$(canvas).mouseup(function(event){
+		mousedown = false
+		pushPath(event);
+		console.log(path);
+	});
+
+	$(canvas).mousemove(function(event){
+		if(mousedown){
+			if(buffer == 0){
+				buffer = buffer_reset;
+				pushPath(event);
+			} else buffer--;
+		}
+	});
+
+	$(canvas).mouseleave(function(event){
+		mousedown = false;
+		pathPush(event);
+		console.log(path);
+	});
+
+	console.log()
+
+});
+
+*/
+</script>
+
+{% endblock %}
