@@ -1,1 +1,1 @@
-web: gunicorn -b 0.0.0.0:$PORT whiteboard:app
+web: gunicorn whiteboard:app -b 0.0.0.0:$PORT
