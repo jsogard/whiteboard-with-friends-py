@@ -37,7 +37,7 @@ else:
 ''' ================== '''
 '''   AUTHENTICATION   '''
 ''' ================== '''
-
+'''
 def check_auth(username, password):
     return username == app.config['USERNAME'] and password == app.config['PASSWORD']
 
@@ -56,11 +56,11 @@ def requires_auth(f):
             return authenticate()
         return f(*args, **kwargs)
     return decorated
-
+'''
 ''' ================== '''
 '''      DB STUFF      '''
 ''' ================== '''
-
+'''
 def connect_db():
 	## connects to specified database ##
 	if ON_LOCAL:
@@ -100,11 +100,11 @@ def populate_db():
 with app.app_context():
 	init_db()
 	populate_db()
-
+'''
 ''' ================== '''
 '''      ROUTING       '''
 ''' ================== '''
-
+'''
 @app.route('/login', methods=['GET','POST'])
 def login():
 	error = None
@@ -158,25 +158,25 @@ def signup():
 				session['username'] = request.form['username']
 				return redirect(url_for('index'))
 	return render_template('signup.html',  error = error)
-
+'''
 @app.route('/', methods=['GET'])
 def index():
 	#print('you are working on %s' % 'local' if ON_LOCAL else 'heroku')
 	if not 'logged_in' in session:
 		return redirect(url_for('login'))
 	return render_template('dashboard.html')
-
+'''
 @app.route('/draw/<int:boardId>', methods=['GET'])
 def draw(boardId):
 	if not 'logged_in' in session:
 		return redirect(url_for('login'))
 	# TODO chekc permissions and send away bad guys
 	return render_template('draw.html')
-
+'''
 ''' ================== '''
 '''      API ISH       '''
 ''' ================== '''
-
+'''
 @app.route('/user', methods=['GET'])
 def getUsers():
 	return jsonify(query_select("SELECT * FROM User"))
@@ -194,11 +194,11 @@ def getUserBoards(uid):
 							 WHERE u.id = (?)
 							 AND u.id = b.userId""", (uid,)))
 
-
+'''
 ''' ================== '''
 '''   HELPER METHODS   '''
 ''' ================== '''
-
+'''
 def query_select(query_str, query_variables=None):
 	if ON_LOCAL:
 		db = get_db()
@@ -224,7 +224,7 @@ def query_update(query_str, query_variables=None):
 			db.execute(query_str, query_variables)
 		db.commit()
 
-
+'''
 ''' ================== '''
 '''   DO NOT TOUCH!!   '''
 ''' ================== '''
