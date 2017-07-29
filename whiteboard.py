@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, redirect, url_for, g, session
 
 app = Flask(__name__)
 app.config.from_object(__name__)
-
+'''
 ON_LOCAL = ('DATABASE_URL' not in os.environ)
 
 if not ON_LOCAL:
@@ -33,7 +33,7 @@ else:
 		USERNAME='admin_joe',
 		PASSWORD='04161996'
 	))
-
+'''
 ''' ================== '''
 '''   AUTHENTICATION   '''
 ''' ================== '''
