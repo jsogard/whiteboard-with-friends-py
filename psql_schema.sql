@@ -12,8 +12,11 @@ create table Board(
 	public boolean not null default false
 );
 
+create type privilege AS ENUM ('DELETE', 'WRITE', 'READ', 'RESTRICT');
+
 create table Permission(
-	board_id int references board(id),
-	user_id int references username(id),
-	write boolean not null
+	board_id int NOT NULL references board(id),
+	user_id int NOT NULL references username(id),
+	privilege privilege NOT NULL DEFAULT 'READ',
+	PRIMARY KEY(board_id, user_id, privilege)
 );

@@ -87,14 +87,21 @@ class Username(db.Model):
 	def __repr__(self):
 		return '<User %r>' % self.username
 
-class Board(db.Model):  		## TODO check this
+	@property
+	def serialize(self):
+		return {
+			'id'		: self.id,
+			'username'	: self.username
+		}
+
+class Board(db.Model):
 	__tablename__ = 'board'
 
 	id = db.Column(db.Integer, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('username.id'))
-	username = db.relationship('Username', db.backref='board') # ??
+	username = db.relationship('Username', backref=db.backref('board')) # ??
 	name = db.Column(db.String(64))
-	last_modified = db.Column(db.datetime)
+	last_modified = db.Column(db.DateTime)
 	public = db.Column(db.Boolean)
 
 	def __init__(self, user_id, name, last_modified, public):
@@ -105,6 +112,41 @@ class Board(db.Model):  		## TODO check this
 
 	def __repr__(self):
 		return '<Board %r:%r>' % (name, user_id) ## check the wildcard
+
+	@property
+	def serialize(self):
+		return {
+			'id'			: self.id,
+			'user'			: self.username.serialize,
+			'name'			: self.name,
+			'last_modified'	: dump_datetime(self.last_modified),
+			'public'		: self.public
+		}
+
+class Permission(db.Model):
+	__tablename__ = 'permission'
+
+	board_id = db.Column(db.Integer, db.ForeignKey('board.id'), primary_key=True)
+	board = db.relationship('Board', backref=db.backref('permission'))
+	user_id = db.Column(db.Integer, db.ForeignKey('username.id'), primary_key=True)
+	username = db.relationship('Username', backref=db.backref('permission'))
+	privilege = db.Column(db.String(10), primary_key=True)
+
+	def __init__(self, board_id, user_id, privilege):
+		self.board_id = board_id
+		self.user_id = user_id
+		self.privilege = privilege
+
+	def __repr__(self):
+		return '<Permission >'
+
+	@property
+	def serialize(self):
+		return {
+			'board'			: self.board.serialize,
+			'user'			: self.username.serialize,
+			'permission'	: self.privilege
+		}
 
 
 ''' ================== '''
@@ -232,7 +274,7 @@ def getUsers():
 	if ON_LOCAL:
 		return jsonify(query_select("SELECT * FROM User"))
 	else:
-		return jsonify(Username.query.all())
+		return jsonify(json_list=[i.serialize for i in Username.query.all()])
 
 @app.route('/board', methods=['GET'])
 def getBoards():
@@ -241,7 +283,7 @@ def getBoards():
 	if ON_LOCAL:
 		return jsonify(query_select("SELECT * FROM Board"))
 	else:
-		return jsonify()
+		return jsonify(json_list=[i.serialize for i in Board.query.all()])
 
 @app.route('/board/user/<int:uid>', methods=['GET'])
 def getUserBoards(uid):
@@ -249,6 +291,13 @@ def getUserBoards(uid):
 							 FROM Board AS b, User AS u
 							 WHERE u.id = (?)
 							 AND u.id = b.userId""", (uid,)))
+
+@app.route('/permission', methods=['GET'])
+def getAllPermissions():
+	if ON_LOCAL:
+		pass
+	else:
+		return jsonify(json_list=[i.serialize for i in Permission.query.all()])
 
 
 ''' ================== '''
@@ -279,6 +328,14 @@ def query_update(query_str, query_variables=None):
 		else:
 			db.execute(query_str, query_variables)
 		db.commit()
+
+def dump_datetime(value):
+	if value is None:
+		return None
+	return {
+		'date'	: value.strftime("%m/%d/%Y"),
+		'time'	: value.strftime("%H:%M:%S")
+	}
 
 ''' ================== '''
 '''   DO NOT TOUCH!!   '''
