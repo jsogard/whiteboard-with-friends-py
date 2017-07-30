@@ -3,3 +3,4 @@ build
 *~
 *.pyc
 whiteboard.db
+db_uri.txt

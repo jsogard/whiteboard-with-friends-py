@@ -5,6 +5,8 @@ import urllib
 import hashlib
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, Response
+from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import JSON
 
 ''' ================== '''
 '''   CONFIGURATION    '''
@@ -13,12 +15,22 @@ from flask import Flask, render_template, request, redirect, url_for, g, session
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-ON_LOCAL = ('DATABASE_URL' not in os.environ)
-
+## make True if working in test
+ON_LOCAL = False
 if not ON_LOCAL:
-	#urlparse.uses_netloc.append("postgres")
-	url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-	#url.netloc += "postgres" # ?? does this work ?? not it does not
+	## reached when deployed to heroku
+	if 'DATABASE_URL' in os.environ:
+		DBURI = os.environ['DATABASE_URL']
+	## reached when using postgress db in dev
+	## ERRORS IF DB_URI HAS NOT BEEN UPDATED from https://data.heroku.com/datastores/09317768-cb46-4413-8f70-4000e5fdc9ed
+	else:
+		with app.open_resource('db_uri.txt', mode='r') as f:
+			DBURI = f.read()
+
+	app.config['SQLALCHEMY_DATABASE_URI'] = DBURI
+	db = SQLAlchemy(app)
+	url = urllib.parse.urlparse(DBURI)
+
 	conn = psycopg2.connect(
 		database=url.path[1:],
 		user=url.username,
@@ -39,23 +51,41 @@ else:
 ''' ================== '''
 
 def check_auth(username, password):
-    return username == app.config['USERNAME'] and password == app.config['PASSWORD']
+	return username == app.config['USERNAME'] and password == app.config['PASSWORD']
 
 def authenticate():
-    """Sends a 401 response that enables basic auth"""
-    return Response(
-    'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
-    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+	"""Sends a 401 response that enables basic auth"""
+	return Response(
+	'Could not verify your access level for that URL.\n'
+	'You have to login with proper credentials', 401,
+	{'WWW-Authenticate': 'Basic realm="Login Required"'})
 
 def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
+	@wraps(f)
+	def decorated(*args, **kwargs):
+		auth = request.authorization
+		if not auth or not check_auth(auth.username, auth.password):
+			return authenticate()
+		return f(*args, **kwargs)
+	return decorated
+
+''' ================== '''
+'''      DB MODELS     '''
+''' ================== '''
+
+class Username(db.Model):
+	__tablename__ = 'username'
+
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.String(64))
+	password = db.Column(db.String(64))
+
+	def __init__(self, username, password):
+		self.username = username
+		self.password = password
+
+	def __repr__(self):
+		return '<User %r>' % self.username
 
 ''' ================== '''
 '''      DB STUFF      '''
@@ -223,7 +253,6 @@ def query_update(query_str, query_variables=None):
 		else:
 			db.execute(query_str, query_variables)
 		db.commit()
-
 
 ''' ================== '''
 '''   DO NOT TOUCH!!   '''
