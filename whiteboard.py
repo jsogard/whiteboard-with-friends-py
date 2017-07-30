@@ -77,7 +77,7 @@ class Username(db.Model):
 	__tablename__ = 'username'
 
 	id = db.Column(db.Integer, primary_key=True)
-	username = db.Column(db.String(64))
+	username = db.Column(db.String(64), unique=True)
 	password = db.Column(db.String(64))
 
 	def __init__(self, username, password):
@@ -86,6 +86,26 @@ class Username(db.Model):
 
 	def __repr__(self):
 		return '<User %r>' % self.username
+
+class Board(db.Model):  		## TODO check this
+	__tablename__ = 'board'
+
+	id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey('username.id'))
+	username = db.relationship('Username', db.backref='board') # ??
+	name = db.Column(db.String(64))
+	last_modified = db.Column(db.datetime)
+	public = db.Column(db.Boolean)
+
+	def __init__(self, user_id, name, last_modified, public):
+		self.user_id = user_id
+		self.name = name
+		self.last_modified = last_modified
+		self.public = public
+
+	def __repr__(self):
+		return '<Board %r:%r>' % (name, user_id) ## check the wildcard
+
 
 ''' ================== '''
 '''      DB STUFF      '''
@@ -209,13 +229,19 @@ def draw(boardId):
 
 @app.route('/user', methods=['GET'])
 def getUsers():
-	return jsonify(query_select("SELECT * FROM User"))
+	if ON_LOCAL:
+		return jsonify(query_select("SELECT * FROM User"))
+	else:
+		return jsonify(Username.query.all())
 
 @app.route('/board', methods=['GET'])
 def getBoards():
 	if 'logged_in' in session:
 		return getUserBoards(session['id'])
-	return jsonify(query_select("SELECT * FROM Board"))
+	if ON_LOCAL:
+		return jsonify(query_select("SELECT * FROM Board"))
+	else:
+		return jsonify()
 
 @app.route('/board/user/<int:uid>', methods=['GET'])
 def getUserBoards(uid):
