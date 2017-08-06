@@ -236,24 +236,41 @@ def getUserBoards(uid):
 								 AND u.id = b.userId""", (uid,)))
 	return jsonify(json_list=[i.serialize for i in models.Board.query.filter(models.Board.user_id==uid).all()])
 
-@app.route('/permission', methods=['GET', 'POST'])
+@app.route('/permission', methods=['GET', 'PUT'])
 def getAllPermissions():
 	if request.method == 'GET':
 		if ON_LOCAL:
 			return None ## TODO
 		else:
 			return jsonify(json_list=[i.serialize for i in models.Permission.query.all()])
-
-	elif request.method == 'POST':
+	
+	elif request.method == 'PUT':
+		'''
+		Add new permission
+		{
+			"board_id": X,
+			"user_id": X,
+			"privilege": 'XXXX'
+		}
+		'''
 		if ON_LOCAL:
 			return None
 		perm_json = json.loads(request.data)
-		# TODO check if permission allows for it already
-		perm = models.Permission(board_id = perm_json['board_id'],
-								 user_id = perm_json['user_id'],
-								 privilege = perm_json['privilege'])
-		db.session.add(perm)
-		db.session.commit()
+		perm_board = models.Board.query.filter(models.Board.id == perm_json['board_id']).first()
+		
+		## TODO fix all this shit. weird logic to figure out
+		if perm_board.public != 'RESTRICT' and privilege_cmp(perm_json['privilege'],perm_board.public) <= 0:
+			return jsonify(error="User already has %r permissions" % perm_json['privilege']), 403
+		
+		try:
+			perm = models.Permission(board_id = perm_json['board_id'],
+									 user_id = perm_json['user_id'],
+									 privilege = perm_json['privilege'])
+			db.session.add(perm)
+			db.session.commit()
+		except Exception as e:
+			return jsonify(error="Board already %r by default" % perm_board.public), 403
+		
 		return jsonify(perm.serialize)
 
 @app.route('/permission/user/<int:uid>', methods=['GET'])
@@ -261,13 +278,35 @@ def getPermittedBoards(uid):
 	if ON_LOCAL:
 		return None ## TODO
 
+	restrict = get_restrict_boards(uid)
+
 	delete = get_delete_boards(uid)
+	delete = list(filter(lambda board: board not in restrict, delete))
 
 	write = get_write_boards(uid)
+	write = list(filter(lambda board: board not in restrict, write))
+	write = list(filter(lambda board: board not in delete, write))
 
-	
+	read = get_read_boards(uid)
+	read = list(filter(lambda board: board not in restrict, read))
+	read = list(filter(lambda board: board not in delete, read))
+	read = list(filter(lambda board: board not in write, read))
 
-	return jsonify({'delete': delete, 'write': write, 'read':get_read_boards(uid)})
+	all_boards = []
+	if delete:
+		for i in delete:
+			i['privilege'] = 'DELETE'
+		all_boards.extend(delete)
+	if write:
+		for i in write:
+			i['privilege'] = 'WRITE'
+		all_boards.extend(write)
+	if read:
+		for i in read:
+			i['privilege'] = 'READ'
+		all_boards.extend(read)
+
+	return jsonify(boards=all_boards)
 	
 
 
@@ -280,42 +319,45 @@ def get_delete_boards(user_id):
 	delete_boards = []
 
 	delete_boards.extend(
-		[i.serialize for i in models.Board.query.filter(models.Board.user_id==user_id).all()]
+		[i.serialize for i in models.Board.query.filter(models.Board.user_id==user_id)
+												.all()]
 	) # boards user owns
 	delete_boards.extend(
-		[i.board.serialize for i in models.Permission.query.filter(models.Permission.privilege=='DELETE',models.Permission.user_id==user_id).all()]
+		[i.board.serialize for i in models.Permission.query.filter(models.Permission.privilege=='DELETE',
+																   models.Permission.user_id==user_id)
+														   .all()]
 	) # user has been given full privilege
 
-	return delete_boards
+	return sorted(delete_boards, key=lambda board: board['id'])
 
 def get_write_boards(user_id):
 	## check boards that admin has only write permissions on ##
 	write_boards = []
 
 	write_boards.extend(
-		[i.serialize for i in models.Board.query.filter(models.Board.public=='WRITE').all() if i.serialize]
+		[i.serialize for i in models.Board.query.filter(models.Board.public=='WRITE').all()]
 	) # public write boards
 	write_boards.extend(
 		[i.board.serialize for i in models.Permission.query.filter(models.Permission.privilege=='WRITE',models.Permission.user_id==user_id).all()]
 	) # user has been given write privilege
 	
-	return write_boards
+	return sorted(write_boards, key=lambda board: board['id'])
 
 def get_read_boards(user_id):
 	## check boards that admin has only read permissions on ##
 	read_boards = []
 
 	read_boards.extend(
-		[i.serialize for i in models.Board.query.filter(models.Board.public=='READ').all()] ## TODO restrictions
+		[i.serialize for i in models.Board.query.filter(models.Board.public=='READ').all()]
 	) # public read boards
 	read_boards.extend(
 		[i.serialize for i in models.Permission.query.filter(models.Permission.privilege=='READ',models.Permission.user_id==user_id).all()]
 	) #user has bee given read privilege
 
-	return read_boards
+	return sorted(read_boards, key=lambda board: board['id'])
 
 def get_restrict_boards(user_id):
-	return [i.serialize for i in models.Permission.query.filter(models.Permission.privilege=='RESTRICT', models.Permission.user_id==user_id).all()]
+	return [i.board.serialize for i in models.Permission.query.filter(models.Permission.privilege=='RESTRICT', models.Permission.user_id==user_id).all()]
 
 def query_select(query_str, query_variables=None):
 	if ON_LOCAL:
@@ -341,6 +383,16 @@ def query_update(query_str, query_variables=None):
 		else:
 			db.execute(query_str, query_variables)
 		db.commit()
+
+## returns negative if priv1 is more restrictive than priv2
+def privilege_cmp(priv1, priv2):
+	cmp_dict = {
+		'RESTRICT':	0,
+		'READ':		1,
+		'WRITE':	2,
+		'DELETE':	3
+	}
+	return cmp_dict[priv1] - cmp_dict[priv2]
 
 ''' ================== '''
 '''   DO NOT TOUCH!!   '''

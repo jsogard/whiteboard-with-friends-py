@@ -38,7 +38,7 @@ class Board(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('username.id'))
-	username = db.relationship('Username', backref=db.backref('board')) # ??
+	username = db.relationship('Username', backref=db.backref('board'))
 	name = db.Column(db.String(64))
 	last_modified = db.Column(db.DateTime)
 	public = db.Column(db.String(10))
