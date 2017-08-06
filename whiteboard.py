@@ -8,6 +8,8 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, Response
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON
+#from models import Username, Board, Permission
+import models
 
 ''' ================== '''
 '''   CONFIGURATION    '''
@@ -71,84 +73,7 @@ def requires_auth(f):
 		return f(*args, **kwargs)
 	return decorated
 
-''' ================== '''
-'''      DB MODELS     '''
-''' ================== '''
 
-class Username(db.Model):
-	__tablename__ = 'username'
-
-	id = db.Column(db.Integer, primary_key=True)
-	username = db.Column(db.String(64), unique=True)
-	password = db.Column(db.String(64))
-
-	def __init__(self, username, password):
-		self.username = username
-		self.password = password
-
-	def __repr__(self):
-		return '<User %r>' % self.username
-
-	@property
-	def serialize(self):
-		return {
-			'id'		: self.id,
-			'username'	: self.username
-		}
-
-class Board(db.Model):
-	__tablename__ = 'board'
-
-	id = db.Column(db.Integer, primary_key=True)
-	user_id = db.Column(db.Integer, db.ForeignKey('username.id'))
-	username = db.relationship('Username', backref=db.backref('board')) # ??
-	name = db.Column(db.String(64))
-	last_modified = db.Column(db.DateTime)
-	public = db.Column(db.String(10))
-
-	def __init__(self, user_id, name, last_modified, public):
-		self.user_id = user_id
-		self.name = name
-		self.last_modified = last_modified
-		self.public = public
-
-	def __repr__(self):
-		return '<Board %r:%r>' % (name, user_id) ## check the wildcard
-
-	@property
-	def serialize(self):
-		return {
-			'id'			: self.id,
-			'user'			: self.username.serialize,
-			'name'			: self.name,
-			'last_modified'	: dump_datetime(self.last_modified),
-			'public'		: self.public
-		}
-
-class Permission(db.Model):
-	__tablename__ = 'permission'
-
-	board_id = db.Column(db.Integer, db.ForeignKey('board.id'), primary_key=True)
-	board = db.relationship('Board', backref=db.backref('permission'))
-	user_id = db.Column(db.Integer, db.ForeignKey('username.id'), primary_key=True)
-	username = db.relationship('Username', backref=db.backref('permission'))
-	privilege = db.Column(db.String(10), primary_key=True)
-
-	def __init__(self, board_id, user_id, privilege):
-		self.board_id = board_id
-		self.user_id = user_id
-		self.privilege = privilege
-
-	def __repr__(self):
-		return '<Permission >'
-
-	@property
-	def serialize(self):
-		return {
-			'board'			: self.board.serialize,
-			'user'			: self.username.serialize,
-			'permission'	: self.privilege
-		}
 
 
 ''' ================== '''
@@ -276,7 +201,7 @@ def getUsers():
 	if ON_LOCAL:
 		return jsonify(query_select("SELECT * FROM User"))
 	else:
-		return jsonify(json_list=[i.serialize for i in Username.query.all()])
+		return jsonify(json_list=[i.serialize for i in models.Username.query.all()])
 
 @app.route('/board', methods=['GET','POST'])
 def getBoards():
@@ -286,11 +211,11 @@ def getBoards():
 		if ON_LOCAL:
 			return jsonify(query_select("SELECT * FROM Board"))
 		else:
-			return jsonify(json_list=[i.serialize for i in Board.query.all()])
+			return jsonify(json_list=[i.serialize for i in models.Board.query.all()])
 	
 	elif request.method == 'POST': # create new board
 		board_json = json.loads(request.data)
-		board = Board(user_id = session['id'] if 'id' in session else board_json['id'],
+		board = models.Board(user_id = session['id'] if 'id' in session else board_json['id'],
 					  name = board_json['name'],
 					  public = board_json['public'],
 					  last_modified = 'NOW()')
@@ -306,63 +231,66 @@ def getUserBoards(uid):
 								 FROM Board AS b, User AS u
 								 WHERE u.id = (?)
 								 AND u.id = b.userId""", (uid,)))
-	return jsonify(json_list=[i.serialize for i in Board.query.filter(Board.user_id==uid).all()])
+	return jsonify(json_list=[i.serialize for i in models.Board.query.filter(models.Board.user_id==uid).all()])
 
 @app.route('/permission', methods=['GET'])
 def getAllPermissions():
 	if ON_LOCAL:
 		return None ## TODO
 	else:
-		return jsonify(json_list=[i.serialize for i in Permission.query.all()])
+		return jsonify(json_list=[i.serialize for i in models.models.Permission.query.all()])
 
 @app.route('/permission/user/<int:uid>', methods=['GET'])
 def getPermittedBoards(uid):
 	if ON_LOCAL:
 		return None ## TODO
 
-	## check boards that admin has full permissions on ##
-	delete_boards = []
-
-	delete_boards.extend(
-		[i.serialize for i in Board.query.filter(Board.user_id==uid).all()]
-	) # boards user owns
-	delete_boards.extend(
-		[i.board.serialize for i in Permission.query.filter(Permission.privilege=='DELETE',Permission.user_id==uid).all()]
-	) # user has been given full privilege
-	print(jsonify(delete_boards))
-
-	## check boards that admin has only write permissions on ##
-	write_boards = []
-
-	write_boards.extend(
-		[i.serialize for i in Board.query.filter(Board.public=='WRITE').all() if i.serialize]
-	) # public write boards
-	write_boards.extend(
-		[i.board.serialize for i in Permission.query.filter(Permission.privilege=='WRITE',Permission.user_id==uid).all()]
-	) # user has been given write privilege
-	print(jsonify(write_boards))
-
-	#write_boards = [i for i in write_boards not in delete_boards]
-
-	## check boards that admin has only read permissions on ##
-	read_boards = []
-	read_boards.extend(
-		[i.serialize for i in Board.query.filter(Board.public=='READ').all()]
-	) # public read boards
-	read_boards.extend(
-		[i.serialize for i in Permission.query.filter(Permission.privilege=='READ',Permission.user_id==uid).all()]
-	) #user has bee given read privilege
-	print(jsonify(write_boards))
-
-	#read_boards = [i for i in read_boards not in delete_boards not in write_boards]
-
-	return jsonify({'delete': delete_boards, 'write': write_boards, 'read':read_boards})
+	return jsonify({'delete': get_delete_boards(uid), 'write': get_write_boards(uid), 'read':get_read_boards(uid)})
 	
 
 
 ''' ================== '''
 '''   HELPER METHODS   '''
 ''' ================== '''
+
+def get_delete_boards(user_id):
+	## check boards that admin has full permissions on ##
+	delete_boards = []
+
+	delete_boards.extend(
+		[i.serialize for i in models.Board.query.filter(models.Board.user_id==user_id).all()]
+	) # boards user owns
+	delete_boards.extend(
+		[i.board.serialize for i in models.Permission.query.filter(models.Permission.privilege=='DELETE',models.Permission.user_id==user_id).all()]
+	) # user has been given full privilege
+
+	return delete_boards
+
+def get_write_boards(user_id):
+	## check boards that admin has only write permissions on ##
+	write_boards = []
+
+	write_boards.extend(
+		[i.serialize for i in models.Board.query.filter(models.Board.public=='WRITE').all() if i.serialize]
+	) # public write boards
+	write_boards.extend(
+		[i.board.serialize for i in models.Permission.query.filter(models.Permission.privilege=='WRITE',models.Permission.user_id==user_id).all()]
+	) # user has been given write privilege
+	
+	return write_boards
+
+def get_read_boards(user_id):
+	## check boards that admin has only read permissions on ##
+	read_boards = []
+
+	read_boards.extend(
+		[i.serialize for i in models.Board.query.filter(models.Board.public=='READ').all()]
+	) # public read boards
+	read_boards.extend(
+		[i.serialize for i in models.Permission.query.filter(models.Permission.privilege=='READ',models.Permission.user_id==user_id).all()]
+	) #user has bee given read privilege
+
+	return read_boards
 
 def query_select(query_str, query_variables=None):
 	if ON_LOCAL:
@@ -388,14 +316,6 @@ def query_update(query_str, query_variables=None):
 		else:
 			db.execute(query_str, query_variables)
 		db.commit()
-
-def dump_datetime(value):
-	if value is None:
-		return None
-	return {
-		'date'	: value.strftime("%m/%d/%Y"),
-		'time'	: value.strftime("%H:%M:%S")
-	}
 
 ''' ================== '''
 '''   DO NOT TOUCH!!   '''
