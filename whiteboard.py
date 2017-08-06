@@ -3,6 +3,7 @@ import psycopg2
 import sqlite3
 import urllib
 import hashlib
+import json
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, Response
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -23,6 +24,7 @@ if not ON_LOCAL:
 		DBURI = os.environ['DATABASE_URL']
 	## reached when using postgress db in dev
 	## ERRORS IF DB_URI HAS NOT BEEN UPDATED from https://data.heroku.com/datastores/09317768-cb46-4413-8f70-4000e5fdc9ed
+	## cli with heroku pg:psql postgresql-acute-28574 --app whiteboard-with-friends-py
 	else:
 		with app.open_resource('db_uri.txt', mode='r') as f:
 			DBURI = f.read()
@@ -102,7 +104,7 @@ class Board(db.Model):
 	username = db.relationship('Username', backref=db.backref('board')) # ??
 	name = db.Column(db.String(64))
 	last_modified = db.Column(db.DateTime)
-	public = db.Column(db.Boolean)
+	public = db.Column(db.String(10))
 
 	def __init__(self, user_id, name, last_modified, public):
 		self.user_id = user_id
@@ -276,28 +278,86 @@ def getUsers():
 	else:
 		return jsonify(json_list=[i.serialize for i in Username.query.all()])
 
-@app.route('/board', methods=['GET'])
+@app.route('/board', methods=['GET','POST'])
 def getBoards():
-	if 'logged_in' in session:
-		return getUserBoards(session['id'])
-	if ON_LOCAL:
-		return jsonify(query_select("SELECT * FROM Board"))
-	else:
-		return jsonify(json_list=[i.serialize for i in Board.query.all()])
+	if request.method == 'GET': # get all boards
+		if 'logged_in' in session:
+			return getUserBoards(session['id'])
+		if ON_LOCAL:
+			return jsonify(query_select("SELECT * FROM Board"))
+		else:
+			return jsonify(json_list=[i.serialize for i in Board.query.all()])
+	
+	elif request.method == 'POST': # create new board
+		board_json = json.loads(request.data)
+		board = Board(user_id = session['id'] if 'id' in session else board_json['id'],
+					  name = board_json['name'],
+					  public = board_json['public'],
+					  last_modified = 'NOW()')
+		db.session.add(board)
+		db.session.commit()
+		return jsonify(board.serialize)
+
 
 @app.route('/board/user/<int:uid>', methods=['GET'])
 def getUserBoards(uid):
-	return jsonify(query_select("""SELECT b.id, b.name, b.lastModified, u.username
-							 FROM Board AS b, User AS u
-							 WHERE u.id = (?)
-							 AND u.id = b.userId""", (uid,)))
+	if ON_LOCAL:
+		return jsonify(query_select("""SELECT b.id, b.name, b.lastModified, u.username
+								 FROM Board AS b, User AS u
+								 WHERE u.id = (?)
+								 AND u.id = b.userId""", (uid,)))
+	return jsonify(json_list=[i.serialize for i in Board.query.filter(Board.user_id==uid).all()])
 
 @app.route('/permission', methods=['GET'])
 def getAllPermissions():
 	if ON_LOCAL:
-		pass
+		return None ## TODO
 	else:
 		return jsonify(json_list=[i.serialize for i in Permission.query.all()])
+
+@app.route('/permission/user/<int:uid>', methods=['GET'])
+def getPermittedBoards(uid):
+	if ON_LOCAL:
+		return None ## TODO
+
+	## check boards that admin has full permissions on ##
+	delete_boards = []
+
+	delete_boards.extend(
+		[i.serialize for i in Board.query.filter(Board.user_id==uid).all()]
+	) # boards user owns
+	delete_boards.extend(
+		[i.board.serialize for i in Permission.query.filter(Permission.privilege=='DELETE',Permission.user_id==uid).all()]
+	) # user has been given full privilege
+	print(jsonify(delete_boards))
+
+	## check boards that admin has only write permissions on ##
+	write_boards = []
+
+	write_boards.extend(
+		[i.serialize for i in Board.query.filter(Board.public=='WRITE').all() if i.serialize]
+	) # public write boards
+	write_boards.extend(
+		[i.board.serialize for i in Permission.query.filter(Permission.privilege=='WRITE',Permission.user_id==uid).all()]
+	) # user has been given write privilege
+	print(jsonify(write_boards))
+
+	#write_boards = [i for i in write_boards not in delete_boards]
+
+	## check boards that admin has only read permissions on ##
+	read_boards = []
+	read_boards.extend(
+		[i.serialize for i in Board.query.filter(Board.public=='READ').all()]
+	) # public read boards
+	read_boards.extend(
+		[i.serialize for i in Permission.query.filter(Permission.privilege=='READ',Permission.user_id==uid).all()]
+	) #user has bee given read privilege
+	print(jsonify(write_boards))
+
+	#read_boards = [i for i in read_boards not in delete_boards not in write_boards]
+
+	return jsonify({'delete': delete_boards, 'write': write_boards, 'read':read_boards})
+	
 
 
 ''' ================== '''
