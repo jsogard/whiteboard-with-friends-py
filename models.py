@@ -1,7 +1,4 @@
 from whiteboard import db
-from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import JSON
-
 
 def dump_datetime(value):
 	if value is None:
@@ -53,7 +50,7 @@ class Board(db.Model):
 		self.public = public
 
 	def __repr__(self):
-		return '<Board %r:%r>' % (name, user_id) ## check the wildcard
+		return '<Board %r:%r>' % (self.name, self.user_id)
 
 	@property
 	def serialize(self):
@@ -80,7 +77,7 @@ class Permission(db.Model):
 		self.privilege = privilege
 
 	def __repr__(self):
-		return '<Permission >'
+		return '<Permission u%r:b%r:%r>' % (self.user_id, self.board_id, self.privilege)
 
 	@property
 	def serialize(self):

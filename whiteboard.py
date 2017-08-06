@@ -6,10 +6,13 @@ import hashlib
 import json
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, Response
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON
 #from models import Username, Board, Permission
 import models
+
+
+SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 ''' ================== '''
 '''   CONFIGURATION    '''
@@ -233,19 +236,38 @@ def getUserBoards(uid):
 								 AND u.id = b.userId""", (uid,)))
 	return jsonify(json_list=[i.serialize for i in models.Board.query.filter(models.Board.user_id==uid).all()])
 
-@app.route('/permission', methods=['GET'])
+@app.route('/permission', methods=['GET', 'POST'])
 def getAllPermissions():
-	if ON_LOCAL:
-		return None ## TODO
-	else:
-		return jsonify(json_list=[i.serialize for i in models.models.Permission.query.all()])
+	if request.method == 'GET':
+		if ON_LOCAL:
+			return None ## TODO
+		else:
+			return jsonify(json_list=[i.serialize for i in models.Permission.query.all()])
+
+	elif request.method == 'POST':
+		if ON_LOCAL:
+			return None
+		perm_json = json.loads(request.data)
+		# TODO check if permission allows for it already
+		perm = models.Permission(board_id = perm_json['board_id'],
+								 user_id = perm_json['user_id'],
+								 privilege = perm_json['privilege'])
+		db.session.add(perm)
+		db.session.commit()
+		return jsonify(perm.serialize)
 
 @app.route('/permission/user/<int:uid>', methods=['GET'])
 def getPermittedBoards(uid):
 	if ON_LOCAL:
 		return None ## TODO
 
-	return jsonify({'delete': get_delete_boards(uid), 'write': get_write_boards(uid), 'read':get_read_boards(uid)})
+	delete = get_delete_boards(uid)
+
+	write = get_write_boards(uid)
+
+	
+
+	return jsonify({'delete': delete, 'write': write, 'read':get_read_boards(uid)})
 	
 
 
@@ -284,13 +306,16 @@ def get_read_boards(user_id):
 	read_boards = []
 
 	read_boards.extend(
-		[i.serialize for i in models.Board.query.filter(models.Board.public=='READ').all()]
+		[i.serialize for i in models.Board.query.filter(models.Board.public=='READ').all()] ## TODO restrictions
 	) # public read boards
 	read_boards.extend(
 		[i.serialize for i in models.Permission.query.filter(models.Permission.privilege=='READ',models.Permission.user_id==user_id).all()]
 	) #user has bee given read privilege
 
 	return read_boards
+
+def get_restrict_boards(user_id):
+	return [i.serialize for i in models.Permission.query.filter(models.Permission.privilege=='RESTRICT', models.Permission.user_id==user_id).all()]
 
 def query_select(query_str, query_variables=None):
 	if ON_LOCAL:

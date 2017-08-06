@@ -9,7 +9,8 @@ create table Board(
 	user_id int references username(id),
 	name varchar(64) not null,
 	last_modified timestamp not null,
-	public privilege not null default 'RESTRICT' check (public != 'DELETE')
+	public privilege not null default 'RESTRICT' check (public != 'DELETE'),
+	CONSTRAINT unq_user_name UNIQUE (user_id, name)
 );
 
 create type privilege AS ENUM ('DELETE', 'WRITE', 'READ', 'RESTRICT');
