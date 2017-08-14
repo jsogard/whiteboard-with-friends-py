@@ -242,7 +242,7 @@ def getAllPermissions():
 		if ON_LOCAL:
 			return None ## TODO
 		else:
-			return jsonify(json_list=[i.serialize for i in models.Permission.query.all()])
+			return jsonify(permissions=[i.serialize for i in models.Permission.query.all()])
 	
 	elif request.method == 'PUT':
 		'''
@@ -255,21 +255,20 @@ def getAllPermissions():
 		'''
 		if ON_LOCAL:
 			return None
+
 		perm_json = json.loads(request.data)
-		perm_board = models.Board.query.filter(models.Board.id == perm_json['board_id']).first()
-		
-		## TODO fix all this shit. weird logic to figure out
-		if perm_board.public != 'RESTRICT' and privilege_cmp(perm_json['privilege'],perm_board.public) <= 0:
-			return jsonify(error="User already has %r permissions" % perm_json['privilege']), 403
-		
-		try:
+		perm = models.Permission.query.filter(models.Permission.board_id == perm_json['board_id'],
+											  models.Permission.user_id == perm_json['user_id']).first()
+
+		if perm == None:
 			perm = models.Permission(board_id = perm_json['board_id'],
 									 user_id = perm_json['user_id'],
 									 privilege = perm_json['privilege'])
 			db.session.add(perm)
 			db.session.commit()
-		except Exception as e:
-			return jsonify(error="Board already %r by default" % perm_board.public), 403
+		else:
+			perm.privilege = perm_json['privilege']
+			db.session.commit()
 		
 		return jsonify(perm.serialize)
 
@@ -279,6 +278,11 @@ def getPermittedBoards(uid):
 		return None ## TODO
 
 	restrict = get_restrict_boards(uid)
+
+
+	delete = get_delete_boards(uid)
+	write = get_write_boards(uid)
+	read = get_read_boards(uid)
 
 	delete = get_delete_boards(uid)
 	delete = list(filter(lambda board: board not in restrict, delete))
