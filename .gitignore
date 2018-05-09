@@ -1,6 +1,5 @@
-venv
 build
 *~
 *.pyc
-whiteboard.db
-db_uri.txt
+wwf
+project/project/settings.py

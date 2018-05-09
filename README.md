@@ -10,13 +10,21 @@ A simple Python Flask example application that's ready to run on Heroku.
 
 ## Development Setup
 
-* `virtualenv venv`
+* `virtualenv wwf`
 
-* `source venv/bin/activate`
+* `echo "wwf" >> .gitignore`
+
+* `source wwf/Scripts/activate`
 
 * `pip install -r requirements.txt`
 
-* `python app.py`
+* `pip install Django`
+
+* `django-admin startproject project`
+
+## Run Locally
+
+* `python app\manage.py runserver`
 
 ## Deploy
 
