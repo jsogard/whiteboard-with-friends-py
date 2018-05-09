@@ -1,7 +1,7 @@
 # whiteboard-with-friends-py
 Practicing full-stack dev with an app previously made by Rob Quinn and me
 =======
-Flask Heroku Sample
+[Flask Heroku Sample](https://whiteboard-with-friends-py.herokuapp.com)
 ====================
 
 A simple Python Flask example application that's ready to run on Heroku.

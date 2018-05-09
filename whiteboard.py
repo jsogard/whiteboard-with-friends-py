@@ -37,6 +37,7 @@ if not ON_LOCAL:
 	app.config['SQLALCHEMY_DATABASE_URI'] = DBURI
 	db = SQLAlchemy(app)
 	url = urllib.parse.urlparse(DBURI)
+	db_session = db.session
 
 	conn = psycopg2.connect(
 		database=url.path[1:],
@@ -222,8 +223,8 @@ def getBoards():
 					  name = board_json['name'],
 					  public = board_json['public'],
 					  last_modified = 'NOW()')
-		db.session.add(board)
-		db.session.commit()
+		db_session.add(board)
+		db_session.commit()
 		return jsonify(board.serialize)
 
 
@@ -236,7 +237,7 @@ def getUserBoards(uid):
 								 AND u.id = b.userId""", (uid,)))
 	return jsonify(json_list=[i.serialize for i in models.Board.query.filter(models.Board.user_id==uid).all()])
 
-@app.route('/permission', methods=['GET', 'PUT'])
+@app.route('/permission', methods=['GET', 'PUT', 'DELETE'])
 def getAllPermissions():
 	if request.method == 'GET':
 		if ON_LOCAL:
@@ -261,40 +262,50 @@ def getAllPermissions():
 											  models.Permission.user_id == perm_json['user_id']).first()
 
 		if perm == None:
-			perm = models.Permission(board_id = perm_json['board_id'],
+			add_perm = models.Permission(board_id = perm_json['board_id'],
 									 user_id = perm_json['user_id'],
 									 privilege = perm_json['privilege'])
-			db.session.add(perm)
-			db.session.commit()
+			db.session.add(add_perm)
 		else:
 			perm.privilege = perm_json['privilege']
-			db.session.commit()
+		db.session.commit()
 		
-		return jsonify(perm.serialize)
+		return None, 200
+
+	elif request.method == 'DELETE':
+		'''
+		{
+			"user_id" : XX,
+			"board_id" : XX
+		}
+		'''
+		if ON_LOCAL:
+			return None
+
+		perm_json = json.loads(request.data)
+		del_perm = models.Permission.query.filter(models.Permission.user_id == perm_json['user_id'],
+											  models.Permission.board_id == perm_json['board_id']).first()
+		db.session.delete(del_perm)
+		db.session.commit()
+		return None, 200
 
 @app.route('/permission/user/<int:uid>', methods=['GET'])
 def getPermittedBoards(uid):
 	if ON_LOCAL:
 		return None ## TODO
 
-	restrict = get_restrict_boards(uid)
+	special_permissions = [i.serialize for i in models.Permission.query.filter(models.Permission.user_id == uid).all()]
+	special_boards = [i['board']['id'] for i in special_permissions]
 
-
-	delete = get_delete_boards(uid)
-	write = get_write_boards(uid)
-	read = get_read_boards(uid)
-
-	delete = get_delete_boards(uid)
-	delete = list(filter(lambda board: board not in restrict, delete))
+	delete = [i.serialize for i in models.Board.query.filter(models.Board.user_id == uid).all()]
+	delete.extend([i.serialize for i in models.Board.query.filter])
+	delete = list(filter(lambda board: board not in special_boards, delete))
 
 	write = get_write_boards(uid)
-	write = list(filter(lambda board: board not in restrict, write))
-	write = list(filter(lambda board: board not in delete, write))
+	write = list(filter(lambda board: board not in special_boards, write))
 
 	read = get_read_boards(uid)
-	read = list(filter(lambda board: board not in restrict, read))
-	read = list(filter(lambda board: board not in delete, read))
-	read = list(filter(lambda board: board not in write, read))
+	read = list(filter(lambda board: board not in special_boards, read))
 
 	all_boards = []
 	if delete:
