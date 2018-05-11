@@ -16,9 +16,11 @@
 		<canvas id='whiteboard' width='500' height='250'></canvas>
 		<input type='text' id="color-picker" />
 		<div id='size-slider'></div>
+		<div id='opacity-slider'></div>
 		<canvas id='preview' width='128' height='128'></canvas>
-		<div id="brushes">
-			<img src='{% static "brushes/hard.png" %}' id='hard'>
+		<div id='brushes'>
+			<img src='{% static "brushes/hard.png" %}' id='hard' class='brush-style'>
+			<img src='{% static "brushes/soft.png" %}' id='soft' class='brush-style'>
 		</div>
 		<p id="debug"></p>
 	</body>
@@ -30,17 +32,11 @@
 	}
 	
 	#whiteboard {
-/*
-		width: 500px;
-		height: 250px;
-*/
 		background: #eeeeee;
 		border: 1px solid black;
 	}
 	
 	#preview {
-		width: 128px;
-		height: 128px;
 		background: #eeeeee;
 		border: 1px solid black;
 	}
@@ -56,7 +52,11 @@
 	}
 	
 	#size-slider {
-		width: 100px;
+		width: 200px;
+	}
+	
+	#opacity-slider {
+		width: 200px;
 	}
 
 </style>
@@ -66,7 +66,7 @@ $(document).ready(function(){
 	
 	var ctx = document.getElementById('whiteboard').getContext('2d');
 	var prevX = null, prevY = null, mouseDown = false;
-	var path = [], color = '#000000', width = 5, brush = document.getElementById('hard');
+	var path = [], color = '#000000', width = 5, brush = document.getElementById('hard'), opacity = 1;
 	
 	var previewCanvas = document.getElementById('preview');
 	var preview = previewCanvas.getContext('2d');
@@ -76,19 +76,33 @@ $(document).ready(function(){
 		change: function(newColor){
 			color = newColor.toHexString();
 			drawPreview();
-			$("#debug").text(newColor.toHexString());
 		}
 	});
 	
 	$("#size-slider").slider({
-		max: 50,
+		max: 128,
 		min: 1,
 		value: width,
 		slide: function(e, ui){
 			width = ui.value;
 			drawPreview();
-			$("#debug").text(width);
 		}
+	});
+	
+	$('#opacity-slider').slider({
+		max: 1,
+		min: 0,
+		value: opacity,
+		step: 0.01,
+		slide: function(e, ui){
+			opacity = ui.value;
+			drawPreview();
+		}
+	});
+	
+	$('.brush-style').click(function(e){
+		brush = e.target;
+		drawPreview();
 	});
 	
 	$('#whiteboard')
@@ -97,7 +111,6 @@ $(document).ready(function(){
 		draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, false);
 	})
 		.mousemove(function(e){
-//		$("#debug").text($("#custom").value());
 		if(mouseDown)
 			draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, true);
 	})
@@ -105,26 +118,11 @@ $(document).ready(function(){
 		mouseDown = false;
 		$("#debug").text(JSON.stringify(getPathJSON()));
 	})
-		/*.mouseleave(function(e){
+		.mouseleave(function(e){
 		mouseDown = false;
 		$("#debug").text(JSON.stringify(getPathJSON()));
-	})*/;
-	
-	/*function draw(x, y, mouseDown){
-		if(mouseDown && (x != prevX || y != prevY)){
-			ctx.beginPath();
-			ctx.strokeStyle = color;
-			ctx.lineWidth = width;
-			ctx.lineJoin = 'round';
-			ctx.moveTo(prevX, prevY);
-			ctx.lineTo(x, y);
-			ctx.closePath();
-			ctx.stroke();
-			path.push(x + ':' + y);
-		}
-		prevX = x;
-		prevY = y;
-	}*/
+	})
+	;
 	
 	function draw(x, y, mouseDown){
 		if(mouseDown){
@@ -163,7 +161,7 @@ $(document).ready(function(){
 			pixels[i+0] *= rgb.r / 255;
 			pixels[i+1] *= rgb.g / 255;
 			pixels[i+2] *= rgb.b / 255;
-			pixels[i+3] *= 1;
+			pixels[i+3] *= opacity;
 		}
 		
 		imgData.data = pixels;
