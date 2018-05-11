@@ -64,11 +64,12 @@
 
 $(document).ready(function(){
 	
-	var ctx = document.getElementById("whiteboard").getContext('2d');
+	var ctx = document.getElementById('whiteboard').getContext('2d');
 	var prevX = null, prevY = null, mouseDown = false;
 	var path = [], color = '#000000', width = 5, brush = document.getElementById('hard');
 	
-	var preview = document.getElementById('preview').getContext('2d');
+	var previewCanvas = document.getElementById('preview');
+	var preview = previewCanvas.getContext('2d');
 	
 	$("#color-picker").spectrum({
 		color: color,
@@ -109,7 +110,7 @@ $(document).ready(function(){
 		$("#debug").text(JSON.stringify(getPathJSON()));
 	})*/;
 	
-	function draw(x, y, mouseDown){
+	/*function draw(x, y, mouseDown){
 		if(mouseDown && (x != prevX || y != prevY)){
 			ctx.beginPath();
 			ctx.strokeStyle = color;
@@ -123,6 +124,21 @@ $(document).ready(function(){
 		}
 		prevX = x;
 		prevY = y;
+	}*/
+	
+	function draw(x, y, mouseDown){
+		if(mouseDown){
+			var xDelta = x - prevX, yDelta = y - prevY;
+			var steps = Math.abs((Math.abs(xDelta) > Math.abs(yDelta) ? xDelta : yDelta));
+			for(var i = 0; i < steps; i++){
+				prevX += xDelta / steps;
+				prevY += yDelta / steps;
+				ctx.drawImage(previewCanvas, prevX - 64, prevY - 64);
+			}
+		}
+		prevX = x;
+		prevY = y;
+		ctx.drawImage(previewCanvas, x - 64, y - 64);
 	}
 	
 	function hexToRGB(hex){
@@ -152,7 +168,8 @@ $(document).ready(function(){
 		
 		imgData.data = pixels;
 		preview.putImageData(imgData, 0, 0);
-	}
+	};
+	drawPreview();
 	
 	function getPathJSON(){
 		if(path.length == 0) return null;
