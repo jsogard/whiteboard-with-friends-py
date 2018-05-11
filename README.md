@@ -37,3 +37,5 @@ A simple Python Flask example application that's ready to run on Heroku.
 ## Contributors
 
 * [Spectrum](http://bgrins.github.io/spectrum)
+
+* [JQuery UI](http://jqueryui.com/)

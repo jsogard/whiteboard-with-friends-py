@@ -2,8 +2,12 @@
 <html>
 	<head>
 		{% load static %}
+		
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<script src='{% static "spectrum/spectrum.js" %}'></script>
+		
+		<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 		<link rel='stylesheet' href='{% static "spectrum/spectrum.css" %}' />
 	</head>
 	<body>
@@ -11,6 +15,7 @@
 		<p>Hello World</p>
 		<canvas id="whiteboard"></canvas>
 		<input type='text' id="color-picker" />
+		<div id='size-slider'></div>
 		<p id="debug"></p>
 	</body>
 </html>
@@ -21,6 +26,10 @@
 		height: 250px;
 		background: #eeeeee;
 		border: 1px solid black;
+	}
+	
+	#size-slider {
+		width: 100px;
 	}
 
 </style>
@@ -37,6 +46,16 @@ $(document).ready(function(){
 		change: function(newColor){
 			color = newColor.toHexString();
 			$("#debug").text(newColor.toHexString());
+		}
+	});
+	
+	$("#size-slider").slider({
+		max: 50,
+		min: 1,
+		value: width,
+		slide: function(e, ui){
+			width = ui.value;
+			$("#debug").text(width);
 		}
 	});
 	
