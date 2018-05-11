@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html>
 	<head>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		{% load static %}
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src='{% static "spectrum/spectrum.js" %}'></script>
+		<link rel='stylesheet' href='{% static "spectrum/spectrum.css" %}' />
 	</head>
 	<body>
 	
 		<p>Hello World</p>
 		<canvas id="whiteboard"></canvas>
+		<input type='text' id="color-picker" />
 		<p id="debug"></p>
 	</body>
 </html>
@@ -28,6 +32,13 @@ $(document).ready(function(){
 	var prevX = null, prevY = null, mouseDown = false;
 	var path = [], color = '#000000', width = 5;
 	
+	$("#color-picker").spectrum({
+		color: color,
+		change: function(newColor){
+			color = newColor.toHexString();
+			$("#debug").text(newColor.toHexString());
+		}
+	});
 	
 	$('#whiteboard')
 		.mousedown(function(e){
@@ -35,16 +46,17 @@ $(document).ready(function(){
 		draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, false);
 	})
 		.mousemove(function(e){
+//		$("#debug").text($("#custom").value());
 		if(mouseDown)
 			draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, true);
 	})
 		.mouseup(function(e){
 		mouseDown = false;
-//		$("#debug").text(JSON.stringify(getPathJSON()));
+		$("#debug").text(JSON.stringify(getPathJSON()));
 	})
 		.mouseleave(function(e){
 		mouseDown = false;
-//		$("#debug").text(JSON.stringify(getPathJSON()));
+		$("#debug").text(JSON.stringify(getPathJSON()));
 	});
 	
 	function draw(x, y, mouseDown){
