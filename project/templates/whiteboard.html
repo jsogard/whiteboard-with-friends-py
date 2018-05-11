@@ -13,19 +13,46 @@
 	<body>
 	
 		<p>Hello World</p>
-		<canvas id="whiteboard"></canvas>
+		<canvas id='whiteboard' width='500' height='250'></canvas>
 		<input type='text' id="color-picker" />
 		<div id='size-slider'></div>
+		<canvas id='preview' width='128' height='128'></canvas>
+		<div id="brushes">
+			<img src='{% static "brushes/hard.png" %}' id='hard'>
+		</div>
 		<p id="debug"></p>
 	</body>
 </html>
 <style>
 
-	canvas {
+	body {
+		text-align: center;
+	}
+	
+	#whiteboard {
+/*
 		width: 500px;
 		height: 250px;
+*/
 		background: #eeeeee;
 		border: 1px solid black;
+	}
+	
+	#preview {
+		width: 128px;
+		height: 128px;
+		background: #eeeeee;
+		border: 1px solid black;
+	}
+	
+	#brushes {
+		background: #000000;
+		border: 1px solid black;
+	}
+	
+	#brushes img {
+		width: 100px;
+		height: 100px;
 	}
 	
 	#size-slider {
@@ -39,12 +66,15 @@ $(document).ready(function(){
 	
 	var ctx = document.getElementById("whiteboard").getContext('2d');
 	var prevX = null, prevY = null, mouseDown = false;
-	var path = [], color = '#000000', width = 5;
+	var path = [], color = '#000000', width = 5, brush = document.getElementById('hard');
+	
+	var preview = document.getElementById('preview').getContext('2d');
 	
 	$("#color-picker").spectrum({
 		color: color,
 		change: function(newColor){
 			color = newColor.toHexString();
+			drawPreview();
 			$("#debug").text(newColor.toHexString());
 		}
 	});
@@ -55,6 +85,7 @@ $(document).ready(function(){
 		value: width,
 		slide: function(e, ui){
 			width = ui.value;
+			drawPreview();
 			$("#debug").text(width);
 		}
 	});
@@ -73,14 +104,12 @@ $(document).ready(function(){
 		mouseDown = false;
 		$("#debug").text(JSON.stringify(getPathJSON()));
 	})
-		.mouseleave(function(e){
+		/*.mouseleave(function(e){
 		mouseDown = false;
 		$("#debug").text(JSON.stringify(getPathJSON()));
-	});
+	})*/;
 	
 	function draw(x, y, mouseDown){
-		x = Math.floor(x * 3 / 5); // magic numbers idk why they work i hate it
-		y = Math.floor(y * 3 / 5);
 		if(mouseDown && (x != prevX || y != prevY)){
 			ctx.beginPath();
 			ctx.strokeStyle = color;
@@ -94,6 +123,35 @@ $(document).ready(function(){
 		}
 		prevX = x;
 		prevY = y;
+	}
+	
+	function hexToRGB(hex){
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+	
+	function drawPreview(){
+		var dim = $('#preview').width();
+		
+		preview.clearRect(0, 0, dim, dim);
+		
+		preview.drawImage(brush, dim/2 - width/2, dim/2 - width/2, width, width);
+		var imgData = preview.getImageData(0, 0, dim, dim);
+		var pixels = imgData.data;
+		var rgb = hexToRGB(color);
+		for(var i = 0; i < pixels.length; i += 4){
+			pixels[i+0] *= rgb.r / 255;
+			pixels[i+1] *= rgb.g / 255;
+			pixels[i+2] *= rgb.b / 255;
+			pixels[i+3] *= 1;
+		}
+		
+		imgData.data = pixels;
+		preview.putImageData(imgData, 0, 0);
 	}
 	
 	function getPathJSON(){
