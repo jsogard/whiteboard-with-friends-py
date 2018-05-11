@@ -25,8 +25,8 @@
 $(document).ready(function(){
 	
 	var ctx = document.getElementById("whiteboard").getContext('2d');
-	var prevX, prevY, mouseDown = false;
-	
+	var prevX = null, prevY = null, mouseDown = false;
+	var path = [], color = '#000000', width = 5;
 	
 	
 	$('#whiteboard')
@@ -35,32 +35,45 @@ $(document).ready(function(){
 		draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, false);
 	})
 		.mousemove(function(e){
-		$("#debug").text((e.pageX - $(this).offset().left) + ', ' + (e.pageY - $(this).offset().top));
 		if(mouseDown)
 			draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, true);
 	})
 		.mouseup(function(e){
 		mouseDown = false;
+//		$("#debug").text(JSON.stringify(getPathJSON()));
 	})
 		.mouseleave(function(e){
 		mouseDown = false;
+//		$("#debug").text(JSON.stringify(getPathJSON()));
 	});
 	
 	function draw(x, y, mouseDown){
-		x *= 3 / 5;
-		y *= 3 / 5;
-		if(mouseDown){
+		x = Math.floor(x * 3 / 5); // magic numbers idk why they work i hate it
+		y = Math.floor(y * 3 / 5);
+		if(mouseDown && (x != prevX || y != prevY)){
 			ctx.beginPath();
-			ctx.strokStyle = '#0000ff';
-			ctx.lineWidth = 10;
+			ctx.strokeStyle = color;
+			ctx.lineWidth = width;
 			ctx.lineJoin = 'round';
 			ctx.moveTo(prevX, prevY);
 			ctx.lineTo(x, y);
 			ctx.closePath();
 			ctx.stroke();
+			path.push(x + ':' + y);
 		}
 		prevX = x;
 		prevY = y;
+	}
+	
+	function getPathJSON(){
+		if(path.length == 0) return null;
+		var json = {
+			color: color,
+			width: width,
+			path: path
+		};
+		path = [];
+		return json;
 	}
 	
 });
