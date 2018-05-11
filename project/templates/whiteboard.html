@@ -24,24 +24,44 @@
 
 $(document).ready(function(){
 	
-	var canvas = document.getElementById("whiteboard");
-	var ctx = canvas.getContext("2d");
+	var ctx = document.getElementById("whiteboard").getContext('2d');
+	var prevX, prevY, mouseDown = false;
 	
 	
 	
-	$('#whiteboard').click(function(e){
-		
-		$("#debug").text(
-			"page: " + (e.pageX) + "," + e.pageY + "\n" +
-			"offset: " + $(this).offset().left + "," + $(this).offset().top + "\n" +
-			"position: " + (e.pageX - $(this).offset().left) + "," + (e.pageY - $(this).offset().top) + "\n");
-		
-		ctx.fillRect(
-			(e.pageX - $(this).offset().left),
-			(e.pageY - $(this).offset().top),
-			10, 10
-		);
+	$('#whiteboard')
+		.mousedown(function(e){
+		mouseDown = true;
+		draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, false);
 	})
+		.mousemove(function(e){
+		$("#debug").text((e.pageX - $(this).offset().left) + ', ' + (e.pageY - $(this).offset().top));
+		if(mouseDown)
+			draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, true);
+	})
+		.mouseup(function(e){
+		mouseDown = false;
+	})
+		.mouseleave(function(e){
+		mouseDown = false;
+	});
+	
+	function draw(x, y, mouseDown){
+		x *= 3 / 5;
+		y *= 3 / 5;
+		if(mouseDown){
+			ctx.beginPath();
+			ctx.strokStyle = '#0000ff';
+			ctx.lineWidth = 10;
+			ctx.lineJoin = 'round';
+			ctx.moveTo(prevX, prevY);
+			ctx.lineTo(x, y);
+			ctx.closePath();
+			ctx.stroke();
+		}
+		prevX = x;
+		prevY = y;
+	}
 	
 });
 	
