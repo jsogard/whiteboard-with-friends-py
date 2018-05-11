@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	</head>
+	<body>
+	
+		<p>Hello World</p>
+		<canvas id="whiteboard"></canvas>
+		<p id="debug"></p>
+	</body>
+</html>
+<style>
+
+	canvas {
+		width: 500px;
+		height: 250px;
+		background: #eeeeee;
+		border: 1px solid black;
+	}
+
+</style>
+<script>
+
+$(document).ready(function(){
+	
+	var canvas = document.getElementById("whiteboard");
+	var ctx = canvas.getContext("2d");
+	
+	
+	
+	$('#whiteboard').click(function(e){
+		
+		$("#debug").text(
+			"page: " + (e.pageX) + "," + e.pageY + "\n" +
+			"offset: " + $(this).offset().left + "," + $(this).offset().top + "\n" +
+			"position: " + (e.pageX - $(this).offset().left) + "," + (e.pageY - $(this).offset().top) + "\n");
+		
+		ctx.fillRect(
+			(e.pageX - $(this).offset().left),
+			(e.pageY - $(this).offset().top),
+			10, 10
+		);
+	})
+	
+});
+	
+</script>
