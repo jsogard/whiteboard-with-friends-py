@@ -3,3 +3,4 @@ build
 *.pyc
 wwf
 project/project/settings.py
+*/migrations/
