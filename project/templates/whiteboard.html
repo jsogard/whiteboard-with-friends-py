@@ -7,38 +7,140 @@
 		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<script src='{% static "spectrum/spectrum.js" %}'></script>
 		
+		<link href="https://fonts.googleapis.com/css?family=Scope+One" rel="stylesheet">
 		<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 		<link rel='stylesheet' href='{% static "spectrum/spectrum.css" %}' />
 	</head>
 	<body>
 	
-		<p>Hello World</p>
-		<canvas id='whiteboard' width='500' height='250'></canvas>
-		<input type='text' id="color-picker" />
-		<div id='size-slider'></div>
-		<div id='opacity-slider'></div>
-		<canvas id='preview' width='128' height='128'></canvas>
-		<div id='brushes'>
+		<div id='header'>
+			<div class="line-break"></div>
+			<h3>Title Of Whiteboard</h3>
+			<p>Owner fo whiteboard</p>
+			<div class="line-break"></div>
+		</div>
+		
+		<div id='frame-whiteboard'>
+			<canvas id='whiteboard' width='600' height='400'></canvas>
+		</div>
+		
+		
+		
+		<div id='tool-bar-header'>
+			<h3>Tool Bar</h3>
+		</div>
+		<table id='tool-bar'>
+			<tr>
+				<td id='slider-tools'>
+					<p>Size</p>
+					<div id='size-slider'></div>
+					<p>Opacity</p>
+					<div id='opacity-slider'></div>
+				</td>
+				<td>
+					<canvas id='preview' width='128' height='128'></canvas>
+				</td>
+				<td>
+					<div style="float: left">
+						<p>Color</p>
+						<input type='text' id="color-picker" />
+					</div>
+					<div>
+						<p>Brush</p>
+						<img id='brush-picker' src='{% static "brushes/hard.png" %}'>
+					</div>
+				</td>
+			</tr>
+		</table>
+		
+		
+		
+		<div id='brushes' style="display: none">
 			<img src='{% static "brushes/hard.png" %}' id='hard' class='brush-style'>
 			<img src='{% static "brushes/soft.png" %}' id='soft' class='brush-style'>
 		</div>
-		<p id="debug"></p>
+		
 	</body>
 </html>
 <style>
 
 	body {
+		font-family: 'Scope One', serif;
 		text-align: center;
+		background: #FFFDF8;
+	}
+	
+	#too-bar-header {
+		width: 400px;
+		margin-top: 50px;
+	}
+	
+	#tool-bar {
+		background: url('{% static "upfeathers.png" %}');
+		border: 3px solid #EEE9DE;
+		width: 650px;
+		height: 175px;
+		margin: auto;
+/*		margin-top: 50px;*/
+		table-layout: fixed;
+		margin-bottom: 60px;
+	}
+	
+	div.sp-replacer.sp-light {
+		background:  #fff;
+		border: 1px solid #c5c5c5;
+	}
+	
+	#tool-bar td {
+		width: 33%;
+		padding-left: 10px;
+		padding-right: 10px;
+	}
+	
+	#brush-picker {
+		height: 100px;
+	}
+	
+	.line-break {
+		background: linear-gradient(to right, #00000000, #EEE9DEFF, #00000000);
+		height: 1px;
+		width: 100%;
+	}
+	
+	#header {
+		margin: auto;
+		margin-bottom: 40px;
+		margin-top: 40px;
+		width: 600px;
+	}
+	
+	#header h3 {
+		font-size: 40px;
+		margin: 0px;
+	}
+	
+	#header * {
+		margin: 0;
+	}
+	
+	#frame-whiteboard {
+		padding: 40px;
+		width: 680px;
+		height: 400px;
+		background: url('{% static "upfeathers.png" %}');
+		border: 5px solid #EEE9DE;
+		margin: auto;
+		margin-bottom: 50px;
 	}
 	
 	#whiteboard {
-		background: #eeeeee;
-		border: 1px solid black;
+		background: #ffffff;
+		border: 1px solid #EEE9DE;
 	}
 	
 	#preview {
-		background: #eeeeee;
-		border: 1px solid black;
+		background: #ffffff;
+		border: 1px solid #EEE9DE;
 	}
 	
 	#brushes {
@@ -116,11 +218,9 @@ $(document).ready(function(){
 	})
 		.mouseup(function(e){
 		mouseDown = false;
-		$("#debug").text(JSON.stringify(getPathJSON()));
 	})
 		.mouseleave(function(e){
 		mouseDown = false;
-		$("#debug").text(JSON.stringify(getPathJSON()));
 	})
 	;
 	
