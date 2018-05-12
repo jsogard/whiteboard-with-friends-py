@@ -7,16 +7,26 @@
 		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<script src='{% static "spectrum/spectrum.js" %}'></script>
 		
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 		<link href="https://fonts.googleapis.com/css?family=Scope+One" rel="stylesheet">
 		<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 		<link rel='stylesheet' href='{% static "spectrum/spectrum.css" %}' />
 	</head>
 	<body>
+		
+		<a href=#>
+			<div id='return'>
+				<img src='{% static "back.png" %}'>
+				<h1>Gallery</h1>
+			</div>
+		</a>
+		
+		
 	
 		<div id='header'>
 			<div class="line-break"></div>
 			<h3>Title Of Whiteboard</h3>
-			<p>Owner fo whiteboard</p>
+			<a href=#>Owner fo whiteboard</a>
 			<div class="line-break"></div>
 		</div>
 		
@@ -40,14 +50,24 @@
 				<td>
 					<canvas id='preview' width='128' height='128'></canvas>
 				</td>
-				<td>
+				<td id='picker-tools'>
 					<div style="float: left">
 						<p>Color</p>
 						<input type='text' id="color-picker" />
 					</div>
-					<div>
-						<p>Brush</p>
+					<div id='brush-div'>
+						<p>Brush <i class="fa fa-sort-down"></i></p>
 						<img id='brush-picker' src='{% static "brushes/hard.png" %}'>
+						<div id='brushes' style='display: none'>
+							<div>
+								<p>Hard</p>
+								<img src='{% static "brushes/hard.png" %}' id='hard' class='brush-style'>
+							</div>
+							<div>
+								<p>Soft</p>
+								<img src='{% static "brushes/soft.png" %}' id='soft' class='brush-style'>
+							</div>
+						</div>
 					</div>
 				</td>
 			</tr>
@@ -55,10 +75,7 @@
 		
 		
 		
-		<div id='brushes' style="display: none">
-			<img src='{% static "brushes/hard.png" %}' id='hard' class='brush-style'>
-			<img src='{% static "brushes/soft.png" %}' id='soft' class='brush-style'>
-		</div>
+		
 		
 	</body>
 </html>
@@ -68,11 +85,27 @@
 		font-family: 'Scope One', serif;
 		text-align: center;
 		background: #FFFDF8;
+		color: #1E1D1C;
 	}
 	
-	#too-bar-header {
-		width: 400px;
-		margin-top: 50px;
+	a {
+		text-decoration: none;
+		color: inherit;
+	}
+	
+	#return {
+		position: absolute;
+		left: -10px;
+	}
+	
+	#return img {
+		height: 70px;
+		margin-top: 7px;
+	}
+	
+	#return * {
+		float: left;
+		color: #EEE9DE;
 	}
 	
 	#tool-bar {
@@ -83,7 +116,7 @@
 		margin: auto;
 /*		margin-top: 50px;*/
 		table-layout: fixed;
-		margin-bottom: 60px;
+		margin-bottom: 180px;
 	}
 	
 	div.sp-replacer.sp-light {
@@ -98,6 +131,7 @@
 	}
 	
 	#brush-picker {
+		position: relative;
 		height: 100px;
 	}
 	
@@ -144,8 +178,28 @@
 	}
 	
 	#brushes {
-		background: #000000;
-		border: 1px solid black;
+/*		background: #FFFDF8;*/
+		background: url('{% static "upfeathers.png" %}');
+		border: 1px solid #EEE9DE;
+		position: absolute;
+		
+	}
+	
+	#brushes div {
+		width: 120px;
+		float: left;
+		cursor: pointer;
+	}
+	
+	#brush-div i {
+		cursor: pointer;
+	}
+	
+	#brushes div.vertical-break {
+		background: linear-gradient(to bottom, #00000000, #EEE9DEFF, #00000000);
+		width: 1px;
+		height: 100%;
+		cursor: default;
 	}
 	
 	#brushes img {
@@ -200,6 +254,29 @@ $(document).ready(function(){
 			opacity = ui.value;
 			drawPreview();
 		}
+	});
+	
+	function toggleBrushes(){
+		var $i = $('#brush-div p i');
+		if($i.hasClass('fa-sort-down')){
+			$('#brushes').fadeIn(100);
+		}
+		else{
+			$('#brushes').fadeOut(100);
+		}
+		$i.toggleClass('fa-sort-down');
+		$i.toggleClass('fa-sort-up');
+	}
+	
+	$('#brush-div i').click(function(e){
+		toggleBrushes();
+	});
+	
+	$('#brushes > div').click(function(e){
+		var chosenUrl = e.currentTarget.querySelector('img.brush-style').src;//.match(/^.*\/static\/(.*)$/)[1];
+		$('#brush-picker').attr('src', chosenUrl);
+		brush = document.getElementById('brush-picker');
+		toggleBrushes();
 	});
 	
 	$('.brush-style').click(function(e){

@@ -39,3 +39,7 @@ A simple Python Flask example application that's ready to run on Heroku.
 * [Spectrum](http://bgrins.github.io/spectrum)
 
 * [JQuery UI](http://jqueryui.com/)
+
+* [Color Picker](https://htmlcolorcodes.com/color-picker/)
+
+* [FlatIcon](https://www.flaticon.com/authors/gregor-cresnar)
