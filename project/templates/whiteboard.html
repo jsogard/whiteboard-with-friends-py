@@ -16,11 +16,11 @@
 		
 		<a href=#>
 			<div id='return'>
-				<img src='{% static "back.png" %}'>
+				<canvas id='gallery-arrow-canvas' style='display: hidden' height='70' width='70'></canvas>
+				<img src='{% static "back.png" %}' style='display: none' id='back-arrow'>
 				<h1>Gallery</h1>
 			</div>
 		</a>
-		
 		
 	
 		<div id='header'>
@@ -84,8 +84,8 @@
 	body {
 		font-family: 'Scope One', serif;
 		text-align: center;
-		background: #FFFDF8;
-		color: #1E1D1C;
+		background: {{ scheme.background }};
+		color: {{ scheme.text }};
 	}
 	
 	a {
@@ -98,19 +98,19 @@
 		left: -10px;
 	}
 	
-	#return img {
-		height: 70px;
+	#return canvas {
+/*		height: 70px;*/
 		margin-top: 7px;
 	}
 	
 	#return * {
 		float: left;
-		color: #EEE9DE;
+		color: {{ scheme.accent }};
 	}
 	
 	#tool-bar {
-		background: url('{% static "upfeathers.png" %}');
-		border: 3px solid #EEE9DE;
+		background: {{ scheme.frame }};
+		border: 3px solid {{ scheme.border }};
 		width: 650px;
 		height: 175px;
 		margin: auto;
@@ -136,7 +136,7 @@
 	}
 	
 	.line-break {
-		background: linear-gradient(to right, #00000000, #EEE9DEFF, #00000000);
+		background: linear-gradient(to right, #00000000, {{ scheme.accent }}, #00000000);
 		height: 1px;
 		width: 100%;
 	}
@@ -161,26 +161,25 @@
 		padding: 40px;
 		width: 680px;
 		height: 400px;
-		background: url('{% static "upfeathers.png" %}');
-		border: 5px solid #EEE9DE;
+		background: {{ scheme.frame }};
+		border: 5px solid {{ scheme.border }};
 		margin: auto;
 		margin-bottom: 50px;
 	}
 	
 	#whiteboard {
 		background: #ffffff;
-		border: 1px solid #EEE9DE;
+		border: 1px solid {{ scheme.border }};
 	}
 	
 	#preview {
 		background: #ffffff;
-		border: 1px solid #EEE9DE;
+		border: 1px solid {{ scheme.border }};
 	}
 	
 	#brushes {
-/*		background: #FFFDF8;*/
-		background: url('{% static "upfeathers.png" %}');
-		border: 1px solid #EEE9DE;
+		background: {{ scheme.frame }};
+		border: 1px solid {{ scheme.border }};
 		position: absolute;
 		
 	}
@@ -193,13 +192,6 @@
 	
 	#brush-div i {
 		cursor: pointer;
-	}
-	
-	#brushes div.vertical-break {
-		background: linear-gradient(to bottom, #00000000, #EEE9DEFF, #00000000);
-		width: 1px;
-		height: 100%;
-		cursor: default;
 	}
 	
 	#brushes img {
@@ -226,6 +218,13 @@ $(document).ready(function(){
 	
 	var previewCanvas = document.getElementById('preview');
 	var preview = previewCanvas.getContext('2d');
+	
+	var backCtx = document.getElementById('gallery-arrow-canvas').getContext('2d');
+	backCtx.fillStyle = $('#return > h1').css('color');
+	backCtx.fillRect(0, 0, 70, 70);
+	backCtx.globalCompositeOperation = 'destination-in';
+	backCtx.drawImage(document.getElementById('back-arrow'), 0, 0, 70, 70);
+	
 	
 	$("#color-picker").spectrum({
 		color: color,
@@ -273,7 +272,7 @@ $(document).ready(function(){
 	});
 	
 	$('#brushes > div').click(function(e){
-		var chosenUrl = e.currentTarget.querySelector('img.brush-style').src;//.match(/^.*\/static\/(.*)$/)[1];
+		var chosenUrl = e.currentTarget.querySelector('img.brush-style').src;
 		$('#brush-picker').attr('src', chosenUrl);
 		brush = document.getElementById('brush-picker');
 		toggleBrushes();
