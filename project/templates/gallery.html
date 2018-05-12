@@ -17,13 +17,15 @@
 			
 			{% for board in boards %}
 			
-			<div class='board'>
-				<h4 class='title'> {{ board.title }} </h4>
-				<p class='owner'> {{ board.owner }} </p>
-				<div class='frame' style='background: {{ board.frame }}; border-color: {{ board.border }}'>
-					<img class='thumbnail' src="{% static '240x160.png' %}">
+			<a href='/whiteboard/{{ board.owner }}/{{ board.id }}'>
+				<div class='board'>
+					<h4 class='title'> {{ board.title }} </h4>
+					<p class='owner'> {{ board.owner }} </p>
+					<div class='frame' style='background: {{ board.frame }}; border-color: {{ board.border }}'>
+						<img class='thumbnail' src="{% static '240x160.png' %}">
+					</div>
 				</div>
-			</div>
+			</a>
 			
 			{% endfor %}
 			
@@ -63,6 +65,7 @@
 		float: left;
 		padding-bottom: 20px;
 		margin: .66%;
+		cursor: pointer;
 	}
 	
 	.frame {

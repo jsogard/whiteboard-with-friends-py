@@ -54,36 +54,42 @@ testBoards = \
 		'title': 	'feather',	\
 		'owner': 	'owner0',	\
 		'scheme': 	'feather',	\
+	 	'id':		7,			\
 	},\
 	{\
 		'title': 	'sakura',	\
 		'owner': 	'owner1',	\
 		'scheme': 	'sakura',	\
+	 	'id':		73,			\
 	},\
 	{\
 		'title': 	'cloud',	\
 		'owner': 	'owner2',	\
 		'scheme': 	'cloudy',	\
+	 	'id':		8,			\
 	},\
 	{\
 		'title': 	'xv',	\
 		'owner': 	'owner3',	\
 		'scheme': 	'xv',	\
+	 	'id':		1,			\
 	},\
 	{\
 		'title': 	'escher',	\
 		'owner': 	'owner4',	\
 		'scheme': 	'escheresque',	\
+	 	'id':		4,			\
 	},\
 	{\
 		'title': 	'restaurant',	\
 		'owner': 	'owner5',	\
 		'scheme': 	'restaurant',	\
+	 	'id':		14,			\
 	},\
 ]
 
 
-def index(request):
+def board(request, owner, id):
 	return render(request, 'whiteboard.html', { 'scheme': colorSchemes['restaurant'] })
 
 def gallery(request):
