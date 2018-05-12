@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{% load static %}
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		
+		<link href="https://fonts.googleapis.com/css?family=Scope+One" rel="stylesheet">
+	</head>
+	<body>
+		
+		<div id='banner'>
+			<h1>The Gallery</h1>
+		</div>
+		
+		<div id='content'>
+			
+			{% for board in boards %}
+			
+			<div class='board'>
+				<h4 class='title'> {{ board.title }} </h4>
+				<p class='owner'> {{ board.owner }} </p>
+				<div class='frame' style='background: {{ board.frame }}; border-color: {{ board.border }}'>
+					<img class='thumbnail' src="{% static '240x160.png' %}">
+				</div>
+			</div>
+			
+			{% endfor %}
+			
+		</div>
+		
+	</body>
+</html>
+<style>
+
+	body {
+		background: url({% static 'patterns/upfeathers.png' %});
+		font-family: 'Scope One', serif;
+		text-align: center;
+	}
+	
+	body > div {
+		width: 80%;
+		background: #FFFDF8;
+		border: 3px solid #EEE9DE;
+		font-size: 20px;
+		margin: auto;
+		margin-bottom: 50px;
+		margin-top: 30px;
+	}
+	
+	#content {
+		min-height: 1000px;
+	}
+	
+	.thumbnail {
+		width: 240px;
+		height: 160px;
+	}
+	
+	.board {
+		width: 32%;
+		float: left;
+		padding-bottom: 20px;
+		margin: .66%;
+	}
+	
+	.frame {
+		padding: 10px;
+/*		background: url({% static 'patterns/upfeathers.png' %});*/
+		border: 2px solid;
+		width: 240px;
+		height: 160px;
+		margin: auto;
+	}
+	
+	
+</style>
+<script>
+
+$(document).ready(function(){
+	
+	$('.board').mouseenter(function(e){
+		
+		$(e.currentTarget).css('background', '#F9F7F3');
+	})
+		.mouseleave(function(e){
+		$(e.currentTarget).css('background', '#FFFDF8');
+	})
+});
+	
+</script>
