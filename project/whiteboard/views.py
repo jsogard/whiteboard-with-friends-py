@@ -100,3 +100,13 @@ def gallery(request):
 		b['border'] = colorSchemes[b['scheme']]['border']
 		boardData.append(b)
 	return render(request, 'gallery.html', { 'boards': boardData })
+
+def user(request, user):
+	boardData = []
+	for board in testBoards:
+		b = board.copy()
+		b['frame'] = colorSchemes[b['scheme']]['frame']
+		b['border'] = colorSchemes[b['scheme']]['border']
+		boardData.append(b)
+	
+	return render(request, 'gallery.html', { 'boards': boardData, 'user': user })

@@ -4,16 +4,51 @@
 		{% load static %}
 		
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-		
+		<script type = "text/javascript" src = "https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
 		<link href="https://fonts.googleapis.com/css?family=Scope+One" rel="stylesheet">
+		
+		{% if user is defined %}
+			<title> {{ user }}'s Gallery </title>
+		{% else %}
+			<title>The Gallery</title>
+		{% endif %}
+		
 	</head>
 	<body>
 		
 		<div id='banner'>
-			<h1>The Gallery</h1>
+			{% if user is defined %}
+				<h1> {{ user }}'s Gallery </h1>
+			{% else %}
+				<h1>The Gallery</h1>
+			{% endif %}
 		</div>
 		
 		<div id='content'>
+			
+			<div id='header'>
+				<a href=#>
+					<div id='profile'>
+						<img src="{% static 'icons/profile.png' %}">
+					</div>
+				</a>
+				<a href=#>
+					<div id='home'>
+						<img src="{% static 'icons/home.png' %}">
+					</div>
+				</a>
+				<a href=#>
+					<div id='search'>
+						<img src="{% static 'icons/search.png' %}">
+					</div>
+				</a>
+				<a href=#>
+					<div id='sort'>
+						<img src="{% static 'icons/sort.png' %}">	
+					</div>
+				</a>
+				<input type="text" style='display: none'>
+			</div>
 			
 			{% for board in boards %}
 			
@@ -39,6 +74,11 @@
 		background: url({% static 'patterns/upfeathers.png' %});
 		font-family: 'Scope One', serif;
 		text-align: center;
+	}
+	
+	a {
+		text-decoration: none;
+		color: #1E1D1C;
 	}
 	
 	body > div {
@@ -70,11 +110,27 @@
 	
 	.frame {
 		padding: 10px;
-/*		background: url({% static 'patterns/upfeathers.png' %});*/
 		border: 2px solid;
 		width: 240px;
 		height: 160px;
 		margin: auto;
+	}
+	
+	#header > * {
+		float: left;
+		width: 24%;
+		margin: 0.5%;
+		height: 60px;
+		border-bottom:  1px solid #00000000;
+	}
+	
+	#header img {
+		height: 40px;
+	}
+	
+	#header div {
+		height: 40px;
+		margin: 10px;
 	}
 	
 	
@@ -88,7 +144,14 @@ $(document).ready(function(){
 		$(e.currentTarget).css('background', '#F9F7F3');
 	})
 		.mouseleave(function(e){
-		$(e.currentTarget).css('background', '#FFFDF8');
+		$(e.currentTarget).css('background', 'inherit');
+	});
+	
+	$('#header > a').mouseenter(function(e){
+		$(e.currentTarget).css('border-bottom', '1px solid #EEE9DE');
+	})
+		.mouseleave(function(e){
+		$(e.currentTarget).css('border-bottom', '1px solid #00000000');
 	})
 });
 	
