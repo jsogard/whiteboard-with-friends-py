@@ -1,4 +1,5 @@
 from django.db import models
+import hashlib
 
 # Create your models here.
 class User(models.Model):
@@ -7,6 +8,17 @@ class User(models.Model):
 	
 	def __str__(self):
 		return self.username
+	
+	def crypto(self, password):
+		# password_hash = sha256(sha256(password) + sha256(username))
+		salt = hashlib.sha256()
+		salt.update(self.username.encode('UTF-8'))
+		pwd = hashlib.sha256()
+		pwd.update(password.encode('UTF-8'))
+		pwd.update(salt.digest())
+		self.password_hash = pwd.hexdigest()
+		
+		
 	
 class Board(models.Model):
 	owner = models.ForeignKey(User, on_delete=models.CASCADE)
