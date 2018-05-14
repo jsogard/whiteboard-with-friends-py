@@ -1,7 +1,11 @@
 from django.shortcuts import render
 
 # Create your views here.
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+import hashlib
+import re
+
+sanitaryPattern = re.compile('^[a-zA-Z0-9_-]$')
 
 colorSchemes = {\
 		"feather":{\
@@ -89,6 +93,48 @@ testBoards = \
 ]
 
 
+def login(request):
+	return render(request, 'login.html', {})
+
+def new_user(request):
+	responseJson = {'username':None, 'password':None, 'confirm':None}
+
+	username = request.POST['username']
+	password = request.POST['password']
+	confirm = request.POST['confirm']
+
+	if len(password) < 8:
+		responseJson['password'] = 'password must exceed 7 characters'
+
+	if password != confirm:
+		responseJson['confirm'] = 'password does not match'
+
+	if len(username) < 3:
+		responseJson['username'] = 'username must exceed 2 characters'
+	elif sanitaryPattern.match(username) == None:
+		responseJson['username'] = 'no special characters except - or _'
+		
+	if responseJson['username'] != None or \
+		responseJson['password'] != None or \
+		responseJson['confirm'] != None:
+		return JsonResponse(responseJson)
+		
+	try:
+		User.objects.get(username=username)
+		responseJson['username'] = 'username taken'
+		return JsonResponse(responseJson)
+	except User.DoesNotExist:
+		return JsonResponse(responseJson)
+				
+#				p_hash = hashlib.sha256()
+#				p_hash.update(password.encode('UTF-8'))
+#				u = User(username=username, password_hash=p_hash.hexdigest())
+		
+		
+		
+		
+	
+
 def board(request, owner, id):
 	return render(request, 'whiteboard.html', { 'scheme': colorSchemes['restaurant'] })
 
@@ -108,5 +154,4 @@ def user(request, user):
 		b['frame'] = colorSchemes[b['scheme']]['frame']
 		b['border'] = colorSchemes[b['scheme']]['border']
 		boardData.append(b)
-	
 	return render(request, 'gallery.html', { 'boards': boardData, 'user': user })

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{% load static %}
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		
+		<link href="https://fonts.googleapis.com/css?family=Scope+One" rel="stylesheet">
+	</head>
+	<body>
+		
+		<div>
+			<h1>Whiteboard With Friends</h1>
+			<div class='line-break'></div>
+			
+<!--			<form action="{% url 'new_user' %}" method='post'>-->
+				{% csrf_token %}
+				
+				<input type='text' placeholder='Username' id='username'>
+				<p class='error' id='user-error'></p>
+				<input type='password' placeholder='Password' id='password'>
+				<p class='error' id='pwd-error'></p>
+				<input type='password' placeholder='Confirm Password' class='signup' id='confirm'>
+				<p class='error signup' id='cpwd-error'></p>
+				<br>
+				<p id='signup-btn' class='login click'>Sign Up</p>
+				<p id='login-btn' class='signup click'>Log In</p>
+
+				<input type='button' value='Log In' class='login' id='login-submit'>
+				<input type='button' value='Sign Up' class='signup' id='signup-submit'>
+<!--			</form>-->
+			
+		</div>
+		
+	</body>
+</html>
+<style>
+	
+	body {
+		background: url({% static 'patterns/upfeathers.png' %});
+		font-family: 'Scope One', serif;
+		text-align: center;
+	}
+
+	body > div {
+		margin: auto;
+		width: 400px;
+		background: #FFFDF8;
+		border: 3px solid #EEE9DE;
+		padding: 20px;
+		text-align: left;
+	}
+	
+	h1 {
+		text-align: center;
+	}
+	
+	.line-break {
+		width: 100%;
+		height: 3px;
+		background: #EEE9DE;
+		margin-bottom: 30px;
+	}
+	
+	input:focus {
+		outline: none;
+	}
+	
+	input[type='text'], input[type='password'] {
+		margin-top: 5px;
+		border: 0;
+		width: 50%;
+		border-bottom: 1px solid #EEE9DE;
+		background: #FFFDF8;
+		height: 20px;
+	}
+	
+	input::placeholder {
+		font-family: 'Scope One', serif;
+		font-style: italic;
+		font-size: 15px;
+	}
+	
+	.signup {
+		display: none;
+	}
+	
+	input[type='button'] {
+		font-family: 'Scope One', serif;
+		border: 1px solid #EEE9DE;
+		background: #FFFDF8;
+		padding: 5px;
+		cursor: pointer;
+		width: 70px;
+		height: 40px;
+	}
+	
+	p.click {
+		text-decoration: underline;
+		color: #D0CCC2;
+		float: right;
+		cursor: pointer;
+	}
+	
+	p.error {
+		font-size: 12px;
+		font-style: italic;
+		color: red;
+		margin: 0;
+		margin-bottom: 20px;
+	}
+	
+</style>
+<script>
+
+$(document).ready(function(){
+	
+	$('p.click').click(function(){
+		$('.signup').toggle();
+		$('.login').toggle();
+	});
+	
+//	function checkEmptyFields(){
+//		var valid = true;
+//		if($('#username').val().length() == 0){
+//			$('#user-error').text('username field is empty');
+//			valid = false;
+//		}
+//		else if($('#username').val().length() <= 2){
+//			$('#user-error').text('username must be longer than 2 characters');
+//			valid = false;
+//		}
+//		
+//		if($('#password').val().length() == 0){
+//			$('#pwd-error').text('password field is empty');
+//			valid = false;
+//		}
+//		else if($('#password').val().length() <= 2){
+//			$('#pwd-error').text('password must be longer than 2 characters');
+//			valid = false;
+//		}
+//		
+//		if($('#confirm').val() != $('#password').val()){
+//			$('#cpwd-error').text('password does not match');
+//			valid = false;
+//		}
+//		
+//		return valid;
+//	}
+	
+	$('#login-submit').click(function(){
+		
+	});
+	
+	$('#signup-submit').click(function(){
+		$.post('/whiteboard/user/new', 
+			  	{
+					'username': $('#username').val(),
+					'password': $('#password').val(),
+					'confirm': $('#confirm').val(),
+					'csrfmiddlewaretoken': document.getElementsByName('csrfmiddlewaretoken')[0].value
+			   	},
+			   	function(data){
+					$('#user-error').text(data['username']);
+					$('#pwd-error').text(data['password']);
+					$('#cpwd-error').text(data['confirm']);
+				});
+	});
+});
+</script>
