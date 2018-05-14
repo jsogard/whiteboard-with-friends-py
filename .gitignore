@@ -4,3 +4,4 @@ build
 wwf
 project/project/settings.py
 */migrations/
+project/db.sqlite3

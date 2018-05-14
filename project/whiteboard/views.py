@@ -2,10 +2,11 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from .models import User, Board
 import hashlib
 import re
 
-sanitaryPattern = re.compile('^[a-zA-Z0-9_-]$')
+sanitaryPattern = re.compile('^[a-zA-Z0-9_-]+$')
 
 colorSchemes = {\
 		"feather":{\
@@ -97,14 +98,14 @@ def login(request):
 	return render(request, 'login.html', {})
 
 def new_user(request):
-	responseJson = {'username':None, 'password':None, 'confirm':None}
+	responseJson = {'username':'', 'password':'', 'confirm':''}
 
 	username = request.POST['username']
 	password = request.POST['password']
 	confirm = request.POST['confirm']
 
-	if len(password) < 8:
-		responseJson['password'] = 'password must exceed 7 characters'
+	if len(password) < 5:
+		responseJson['password'] = 'password must exceed 4 characters'
 
 	if password != confirm:
 		responseJson['confirm'] = 'password does not match'
@@ -114,9 +115,9 @@ def new_user(request):
 	elif sanitaryPattern.match(username) == None:
 		responseJson['username'] = 'no special characters except - or _'
 		
-	if responseJson['username'] != None or \
-		responseJson['password'] != None or \
-		responseJson['confirm'] != None:
+	if responseJson['username'] != '' or \
+		responseJson['password'] != '' or \
+		responseJson['confirm'] != '':
 		return JsonResponse(responseJson)
 		
 	try:
@@ -124,11 +125,13 @@ def new_user(request):
 		responseJson['username'] = 'username taken'
 		return JsonResponse(responseJson)
 	except User.DoesNotExist:
-		return JsonResponse(responseJson)
-				
-#				p_hash = hashlib.sha256()
-#				p_hash.update(password.encode('UTF-8'))
-#				u = User(username=username, password_hash=p_hash.hexdigest())
+		p_hash = hashlib.sha256()
+		p_hash.update(password.encode('UTF-8'))
+		u = User.objects.create(username=username, password_hash=p_hash.hexdigest())
+		u.save()
+		request.session['username'] = username
+		return HttpResponseRedirect('/whiteboard/')
+	return None
 		
 		
 		
