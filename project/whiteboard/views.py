@@ -3,7 +3,6 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from .models import User, Board
-import hashlib
 import re
 
 sanitaryPattern = re.compile('^[a-zA-Z0-9_-]+$')
@@ -125,11 +124,11 @@ def new_user(request):
 		responseJson['username'] = 'username taken'
 		return JsonResponse(responseJson)
 	except User.DoesNotExist:
-		p_hash = hashlib.sha256()
-		p_hash.update(password.encode('UTF-8'))
-		u = User.objects.create(username=username, password_hash=p_hash.hexdigest())
+		u = User.objects.create(username=username)
+		u.crypto(password=password)
 		u.save()
 		request.session['username'] = username
+		request.session['user_id'] = u.id
 		return HttpResponseRedirect('/whiteboard/')
 	return None
 		
