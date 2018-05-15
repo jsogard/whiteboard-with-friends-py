@@ -92,9 +92,29 @@ testBoards = \
 	},\
 ]
 
+## returns none if logged in, otherwise returns the login page
+def check_login_status(request):
+	if 'username' in request.session and request.session != None and request.session != '':
+		return None
+	return render(request, 'login.html', {})
 
 def login(request):
-	return render(request, 'login.html', {})
+	responseJson = {'username':'', 'password':''}
+
+	username = request.POST['username']
+	password = request.POST['password']
+		
+	try:
+		u = User.objects.get(username=username)
+		if u.password_hash != u.crypto(password=password):
+			responseJson['password'] = 'username taken'
+			return JsonResponse(responseJson)
+		request.session['username'] = username
+		request.session['user_id'] = u.id
+		return HttpResponseRedirect('/whiteboard')
+	except User.DoesNotExist:
+		responseJson['username'] = 'user doesn\'t exist'
+		return JsonResponse(responseJson)
 
 def new_user(request):
 	responseJson = {'username':'', 'password':'', 'confirm':''}
@@ -125,11 +145,11 @@ def new_user(request):
 		return JsonResponse(responseJson)
 	except User.DoesNotExist:
 		u = User.objects.create(username=username)
-		u.crypto(password=password)
+		u.password_hash = u.crypto(password=password)
 		u.save()
 		request.session['username'] = username
 		request.session['user_id'] = u.id
-		return HttpResponseRedirect('/whiteboard/')
+		return HttpResponseRedirect('/whiteboard')
 	return None
 		
 		
@@ -138,9 +158,17 @@ def new_user(request):
 	
 
 def board(request, owner, id):
+	login_render = check_login_status(request)
+	if login_render != None:
+		return login_render
+	
 	return render(request, 'whiteboard.html', { 'scheme': colorSchemes['restaurant'] })
 
 def gallery(request):
+	login_render = check_login_status(request)
+	if login_render != None:
+		return login_render
+	
 	boardData = []
 	for board in testBoards:
 		b = board.copy()
@@ -150,6 +178,10 @@ def gallery(request):
 	return render(request, 'gallery.html', { 'boards': boardData })
 
 def user(request, user):
+	login_render = check_login_status(request)
+	if login_render != None:
+		return login_render
+	
 	boardData = []
 	for board in testBoards:
 		b = board.copy()

@@ -3,7 +3,7 @@ import hashlib
 
 # Create your models here.
 class User(models.Model):
-	username = models.CharField(max_length=30, primary_key=True)
+	username = models.CharField(max_length=30, unique=True)
 	password_hash = models.CharField(max_length=64)
 	
 	def __str__(self):
@@ -16,7 +16,7 @@ class User(models.Model):
 		pwd = hashlib.sha256()
 		pwd.update(password.encode('UTF-8'))
 		pwd.update(salt.digest())
-		self.password_hash = pwd.hexdigest()
+		return pwd.hexdigest()
 		
 		
 	
