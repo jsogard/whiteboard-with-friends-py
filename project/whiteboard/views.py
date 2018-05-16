@@ -92,25 +92,47 @@ testBoards = \
 	},\
 ]
 
-## returns none if logged in, otherwise returns the login page
+'''
+url: n/a
+method api
+check if a user is currently logged in
+determined by session dictionary
+returns rendering of login screen if not logged in otherwise None 
+'''
 def check_login_status(request):
 	if 'username' in request.session and request.session != None and request.session != '':
 		return None
 	return render(request, 'login.html', {})
 
+'''
+url: /whiteboard/login
+method api
+if user does not exist or password is incorrect return proper error
+correct credentials lofs user info into session and redirects them
+returns appropriate error message or redirect url
+'''
 def login(request):
 	responseJson = {'redirect': '', 'username':'', 'password':''}
 
 	username = request.POST['username']
 	password = request.POST['password']
 		
+	
 	try:
+		# if user exists, check password and return
+		# else throw exception and return proper error
 		u = User.objects.get(username=username)
+		
+		# check if password is correct
 		if u.password_hash != u.crypto(password=password):
-			responseJson['password'] = 'username taken'
+			responseJson['password'] = 'password incorrect'
 			return JsonResponse(responseJson)
+		
+		# add user information to session
 		request.session['username'] = username
 		request.session['user_id'] = u.id
+		
+		# if user has been redirected to login from elsewhere, set redirect url
 		if 'redirect' in request.session:
 			responseJson['redirect'] = request.session['redirect']
 		else:
@@ -121,11 +143,22 @@ def login(request):
 	
 	return JsonResponse(responseJson)
 	
+'''
+url: /whiteboard/logout
+method api
+removes user information from session, logging them out
+'''
 def logout(request):
 	del request.session['username']
 	del request.session['user_id']
 	return HttpResponse('logged out')
 
+'''
+url: /whiteboard/new/user
+method api
+validates signup 
+returns appropriate error message or creates user and returns redirect url
+'''
 def new_user(request):
 	responseJson = {'redirect': '', 'username':'', 'password':'', 'confirm':''}
 
@@ -133,6 +166,7 @@ def new_user(request):
 	password = request.POST['password']
 	confirm = request.POST['confirm']
 
+	# verify password, confirm password, and username
 	if len(password) < 5:
 		responseJson['password'] = 'password must exceed 4 characters'
 
@@ -149,6 +183,8 @@ def new_user(request):
 		responseJson['confirm'] != '':
 		return JsonResponse(responseJson)
 		
+	# if username exists return error
+	# otherwise create user with proper password hash
 	try:
 		User.objects.get(username=username)
 		responseJson['username'] = 'username taken'
@@ -165,11 +201,13 @@ def new_user(request):
 			
 	return JsonResponse(responseJson)
 		
-		
-		
-		
-	
-
+'''
+url: /whiteboard/<str:user>/<int:board_id>
+page api
+redirect to login if user logged out
+find board with id by user
+render board page with correct scheme and info
+'''
 def board(request, owner, id):
 	login_render = check_login_status(request)
 	if login_render != None:
@@ -178,6 +216,12 @@ def board(request, owner, id):
 	
 	return render(request, 'whiteboard.html', { 'scheme': colorSchemes['restaurant'] })
 
+'''
+url: /whiteboard/
+page api
+redirect to login if user logged out
+returns gallery page with all boards with their scheme peeks and thumbnail paths
+'''
 def gallery(request):
 	login_render = check_login_status(request)
 	if login_render != None:
@@ -192,6 +236,12 @@ def gallery(request):
 		boardData.append(b)
 	return render(request, 'gallery.html', { 'boards': boardData })
 
+'''
+url: /whiteboard/<str:user>
+page api
+redirect to login if user logged out
+returns gallery page with only boards by user with their scheme peeks and thumbnail paths
+'''
 def user(request, user):
 	login_render = check_login_status(request)
 	if login_render != None:
