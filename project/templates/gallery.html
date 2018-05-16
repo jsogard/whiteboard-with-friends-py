@@ -24,6 +24,12 @@
 			{% endif %}
 		</div>
 		
+		<div id='sign-out'>
+			{% csrf_token %}
+			<p>Sign Out</p>
+		</div>
+		
+		
 		<div id='content'>
 			
 			<div id='header'>
@@ -133,6 +139,16 @@
 		margin: 10px;
 	}
 	
+	#sign-out {
+		background: #FFFDF8;
+		border: 2px solid #EEE9DE;
+		cursor: pointer;
+	}
+	
+	#sign-out p {
+		text-decoration: underline;
+		color: #EEE9DE;
+	}
 	
 </style>
 <script>
@@ -152,7 +168,19 @@ $(document).ready(function(){
 	})
 		.mouseleave(function(e){
 		$(e.currentTarget).css('border-bottom', '1px solid #00000000');
-	})
+	});
+	
+	$('#sign-out').click(function(e){
+		$.post(
+			'/whiteboard/logout',
+			{
+				'csrfmiddlewaretoken': document.getElementsByName('csrfmiddlewaretoken')[0].value
+			},
+			function(data){
+				window.location.href = '/whiteboard/';
+			}
+		)
+	});
 });
 	
 </script>

@@ -99,7 +99,7 @@ def check_login_status(request):
 	return render(request, 'login.html', {})
 
 def login(request):
-	responseJson = {'username':'', 'password':''}
+	responseJson = {'redirect': '', 'username':'', 'password':''}
 
 	username = request.POST['username']
 	password = request.POST['password']
@@ -111,13 +111,23 @@ def login(request):
 			return JsonResponse(responseJson)
 		request.session['username'] = username
 		request.session['user_id'] = u.id
-		return HttpResponseRedirect('/whiteboard')
+		if 'redirect' in request.session:
+			responseJson['redirect'] = request.session['redirect']
+		else:
+			responseJson['redirect'] = '/whiteboard';
+			
 	except User.DoesNotExist:
 		responseJson['username'] = 'user doesn\'t exist'
-		return JsonResponse(responseJson)
+	
+	return JsonResponse(responseJson)
+	
+def logout(request):
+	del request.session['username']
+	del request.session['user_id']
+	return HttpResponse('logged out')
 
 def new_user(request):
-	responseJson = {'username':'', 'password':'', 'confirm':''}
+	responseJson = {'redirect': '', 'username':'', 'password':'', 'confirm':''}
 
 	username = request.POST['username']
 	password = request.POST['password']
@@ -142,15 +152,18 @@ def new_user(request):
 	try:
 		User.objects.get(username=username)
 		responseJson['username'] = 'username taken'
-		return JsonResponse(responseJson)
 	except User.DoesNotExist:
 		u = User.objects.create(username=username)
 		u.password_hash = u.crypto(password=password)
 		u.save()
 		request.session['username'] = username
 		request.session['user_id'] = u.id
-		return HttpResponseRedirect('/whiteboard')
-	return None
+		if 'redirect' in request.session:
+			responseJson['redirect'] = request.session['redirect']
+		else:
+			responseJson['redirect'] = '/whiteboard'
+			
+	return JsonResponse(responseJson)
 		
 		
 		
@@ -160,6 +173,7 @@ def new_user(request):
 def board(request, owner, id):
 	login_render = check_login_status(request)
 	if login_render != None:
+		request.session['redirect'] = '/whiteboard/' + owner + '/' + id
 		return login_render
 	
 	return render(request, 'whiteboard.html', { 'scheme': colorSchemes['restaurant'] })
@@ -167,6 +181,7 @@ def board(request, owner, id):
 def gallery(request):
 	login_render = check_login_status(request)
 	if login_render != None:
+		request.session['redirect'] = '/whiteboard'
 		return login_render
 	
 	boardData = []
@@ -180,6 +195,7 @@ def gallery(request):
 def user(request, user):
 	login_render = check_login_status(request)
 	if login_render != None:
+		request.session['redirect'] = '/whiteboard/' + user
 		return login_render
 	
 	boardData = []

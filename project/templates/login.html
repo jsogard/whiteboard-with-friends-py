@@ -120,36 +120,21 @@ $(document).ready(function(){
 		$('.login').toggle();
 	});
 	
-//	function checkEmptyFields(){
-//		var valid = true;
-//		if($('#username').val().length() == 0){
-//			$('#user-error').text('username field is empty');
-//			valid = false;
-//		}
-//		else if($('#username').val().length() <= 2){
-//			$('#user-error').text('username must be longer than 2 characters');
-//			valid = false;
-//		}
-//		
-//		if($('#password').val().length() == 0){
-//			$('#pwd-error').text('password field is empty');
-//			valid = false;
-//		}
-//		else if($('#password').val().length() <= 2){
-//			$('#pwd-error').text('password must be longer than 2 characters');
-//			valid = false;
-//		}
-//		
-//		if($('#confirm').val() != $('#password').val()){
-//			$('#cpwd-error').text('password does not match');
-//			valid = false;
-//		}
-//		
-//		return valid;
-//	}
-	
 	$('#login-submit').click(function(){
-		
+		$.post('/whiteboard/login', 
+			  	{
+					'username': $('#username').val(),
+					'password': $('#password').val(),
+					'csrfmiddlewaretoken': document.getElementsByName('csrfmiddlewaretoken')[0].value
+			   	},
+			   	function(data){
+					if(data['redirect'] != ''){
+						window.location.href = data['redirect'];
+						return;
+					}
+					$('#user-error').text(data['username']);
+					$('#pwd-error').text(data['password']);
+				});
 	});
 	
 	$('#signup-submit').click(function(){
@@ -161,6 +146,10 @@ $(document).ready(function(){
 					'csrfmiddlewaretoken': document.getElementsByName('csrfmiddlewaretoken')[0].value
 			   	},
 			   	function(data){
+					if(data['redirect'] != ''){
+						window.location.href = data['redirect'];
+						return;
+					}
 					$('#user-error').text(data['username']);
 					$('#pwd-error').text(data['password']);
 					$('#cpwd-error').text(data['confirm']);
