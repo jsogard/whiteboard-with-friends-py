@@ -169,7 +169,12 @@ def board(request, owner, id):
 		request.session['redirect'] = '/whiteboard/' + owner + '/' + id
 		return login_render
 	
-	return render(request, 'whiteboard.html', { 'scheme': colorSchemes['restaurant'] })
+	scheme = None
+	for board in testBoards:
+		if board['id'] == id:
+			return render(request, 'whiteboard.html', { 'scheme': Scheme.objects.get(id=board['scheme_id']) })
+	
+	return None
 
 '''
 url: /whiteboard/
@@ -183,19 +188,7 @@ def gallery(request):
 		request.session['redirect'] = '/whiteboard'
 		return login_render
 	
-	schemes = Scheme.objects.all()
-	boardData = []
-	for board in testBoards:
-		b = board.copy()
-		b['frame'] =
-	
-	
-	for board in testBoards:
-		b = board.copy()
-		b['frame'] = colorSchemes[b['scheme']]['frame']
-		b['border'] = colorSchemes[b['scheme']]['border']
-		boardData.append(b)
-	return render(request, 'gallery.html', { 'boards': boardData })
+	return render(request, 'gallery.html', getBoards())
 
 '''
 url: /whiteboard/<str:user>
@@ -209,10 +202,24 @@ def user(request, user):
 		request.session['redirect'] = '/whiteboard/' + user
 		return login_render
 	
+	return render(request, 'gallery.html', getBoards(owner=user))
+
+'''
+url: n/a
+private use method
+returns boards with attached scheme peeks
+'''
+def getBoards(owner=None):
+	schemes = Scheme.objects.all()
 	boardData = []
 	for board in testBoards:
 		b = board.copy()
-		b['frame'] = colorSchemes[b['scheme']]['frame']
-		b['border'] = colorSchemes[b['scheme']]['border']
+		b['frame'] = schemes.get(id=b['scheme_id']).frame
+		b['border'] = schemes.get(id=b['scheme_id']).border
 		boardData.append(b)
-	return render(request, 'gallery.html', { 'boards': boardData, 'user': user })
+		
+	data = { 'boards': boardData }
+	if owner != None:
+		data['user'] = owner
+	
+	return data
