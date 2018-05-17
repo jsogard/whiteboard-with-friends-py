@@ -28,3 +28,18 @@ class Board(models.Model):
 	
 	def __str__(self):
 		return { 'owner': self.owner, 'title': self.title, 'id': self.id }
+	
+class Scheme(models.Model):
+	name = models.CharField(max_length=30, unique=True)
+	background = models.CharField(max_length=60)
+	frame = models.CharField(max_length=60)
+	border = models.CharField(max_length=60)
+	text = models.CharField(max_length=60)
+	accent = models.CharField(max_length=60)
+	
+	def __str__(self):
+		return self.name
+	
+	def peek(self):
+		return { 'frame': self.frame, 'border': self.border }
+	
