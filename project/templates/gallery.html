@@ -58,9 +58,11 @@
 				<div class='board'>
 					<h4 class='title'> {{ board.title }} </h4>
 					<a class='owner' href='/whiteboard/{{ board.owner }}'> {{ board.owner }} </a>
-					<div class='frame' style='background: {{ board.frame }}; border-color: {{ board.border }}'>
-						<img class='thumbnail' src="{% static '240x160.png' %}">
-					</div>
+					<a href='/whiteboard/{{ board.owner }}/{{ board.id }}'>
+						<div class='frame' style='background: {{ board.frame }}; border-color: {{ board.border }}'>
+							<img class='thumbnail' src="{% static '240x160.png' %}">
+						</div>
+					</a>
 				</div>
 			</a>
 			

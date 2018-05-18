@@ -172,7 +172,10 @@ def board(request, owner, id):
 	scheme = None
 	for board in testBoards:
 		if board['id'] == id:
-			return render(request, 'whiteboard.html', { 'user': getCurrentUser(request), 'scheme': Scheme.objects.get(id=board['scheme_id']) })
+			return render(request, 'whiteboard.html', \
+						  { 'user': getCurrentUser(request), \
+						   'scheme': Scheme.objects.get(id=board['scheme_id']), \
+						   'board': board })
 	
 	return None
 

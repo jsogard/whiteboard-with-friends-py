@@ -14,10 +14,10 @@
 	</head>
 	<body>
 		
-		<a href='/whiteboard/gallery'>
+		<a href='/whiteboard'>
 			<div id='return'>
 				<canvas id='gallery-arrow-canvas' style='display: hidden' height='70' width='70'></canvas>
-				<img src='/static/back.png' style='display: none' id='back-arrow'>
+				<img src='/static/icons/back.png' style='display: none' id='back-arrow'>
 				<h1>Gallery</h1>
 			</div>
 		</a>
@@ -25,8 +25,8 @@
 	
 		<div id='header'>
 			<div class="line-break"></div>
-			<h3>Title Of Whiteboard</h3>
-			<a href=#>Owner fo whiteboard</a>
+			<h3> {{ board.title }} </h3>
+			<a href='/whiteboard/{{ board.owner }}'> {{ board.owner }} </a>
 			<div class="line-break"></div>
 		</div>
 		
