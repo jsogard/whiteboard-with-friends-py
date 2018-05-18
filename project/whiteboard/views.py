@@ -12,37 +12,37 @@ testBoards = \
 	{\
 		'scheme_id': 	1,	\
 		'owner': 	'owner0',	\
-		'scheme': 	'feather',	\
+		'title': 	'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm',	\
 	 	'id':		7,			\
 	},\
 	{\
 		'scheme_id': 	2,	\
 		'owner': 	'owner1',	\
-		'scheme': 	'sakura',	\
+		'title': 	'sakura',	\
 	 	'id':		73,			\
 	},\
 	{\
 		'scheme_id': 	3,	\
 		'owner': 	'owner2',	\
-		'scheme': 	'cloudy',	\
+		'title': 	'cloudy',	\
 	 	'id':		8,			\
 	},\
 	{\
 		'scheme_id': 	4,	\
 		'owner': 	'owner3',	\
-		'scheme': 	'xv',	\
+		'title': 	'xv',	\
 	 	'id':		1,			\
 	},\
 	{\
 		'scheme_id': 	5,	\
 		'owner': 	'owner4',	\
-		'scheme': 	'escheresque',	\
+		'title': 	'escheresque',	\
 	 	'id':		4,			\
 	},\
 	{\
 		'scheme_id': 	6,	\
 		'owner': 	'owner5',	\
-		'scheme': 	'restaurant',	\
+		'title': 	'restaurant',	\
 	 	'id':		14,			\
 	},\
 ]
@@ -172,7 +172,7 @@ def board(request, owner, id):
 	scheme = None
 	for board in testBoards:
 		if board['id'] == id:
-			return render(request, 'whiteboard.html', { 'scheme': Scheme.objects.get(id=board['scheme_id']) })
+			return render(request, 'whiteboard.html', { 'user': getCurrentUser(request), 'scheme': Scheme.objects.get(id=board['scheme_id']) })
 	
 	return None
 
@@ -188,7 +188,7 @@ def gallery(request):
 		request.session['redirect'] = '/whiteboard'
 		return login_render
 	
-	return render(request, 'gallery.html', getBoards())
+	return render(request, 'gallery.html', { 'user': getCurrentUser(request), 'boards': getBoards()})
 
 '''
 url: /whiteboard/<str:user>
@@ -202,7 +202,7 @@ def user(request, user):
 		request.session['redirect'] = '/whiteboard/' + user
 		return login_render
 	
-	return render(request, 'gallery.html', getBoards(owner=user))
+	return render(request, 'gallery.html', { 'user': getCurrentUser(request), 'owner': user, 'boards': getBoards(owner=user)} )
 
 '''
 url: n/a
@@ -217,9 +217,11 @@ def getBoards(owner=None):
 		b['frame'] = schemes.get(id=b['scheme_id']).frame
 		b['border'] = schemes.get(id=b['scheme_id']).border
 		boardData.append(b)
-		
-	data = { 'boards': boardData }
-	if owner != None:
-		data['user'] = owner
 	
-	return data
+	return boardData
+
+def getCurrentUser(request):
+	return {
+		'username': request.session['username'],
+		'id': request.session['user_id']
+	}

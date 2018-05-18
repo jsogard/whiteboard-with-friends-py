@@ -7,8 +7,8 @@
 		<script type = "text/javascript" src = "https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
 		<link href="https://fonts.googleapis.com/css?family=Scope+One" rel="stylesheet">
 		
-		{% if user is defined %}
-			<title> {{ user }}'s Gallery </title>
+		{% if owner != None %}
+			<title> {{ owner }}'s Gallery </title>
 		{% else %}
 			<title>The Gallery</title>
 		{% endif %}
@@ -17,28 +17,24 @@
 	<body>
 		
 		<div id='banner'>
-			{% if user is defined %}
-				<h1> {{ user }}'s Gallery </h1>
+			{% if owner != None %}
+				<h1> {{ owner }}'s Gallery </h1>
 			{% else %}
 				<h1>The Gallery</h1>
 			{% endif %}
-		</div>
-		
-		<div id='sign-out'>
-			{% csrf_token %}
-			<p>Sign Out</p>
+			<p id='sign-out'>Sign Out</p>
 		</div>
 		
 		
 		<div id='content'>
 			
 			<div id='header'>
-				<a href=#>
+				<a href='/whiteboard/{{ user.username }}'>
 					<div id='profile'>
 						<img src="{% static 'icons/profile.png' %}">
 					</div>
 				</a>
-				<a href=#>
+				<a href='/whiteboard'>
 					<div id='home'>
 						<img src="{% static 'icons/home.png' %}">
 					</div>
@@ -61,7 +57,7 @@
 			<a href='/whiteboard/{{ board.owner }}/{{ board.id }}'>
 				<div class='board'>
 					<h4 class='title'> {{ board.title }} </h4>
-					<p class='owner'> {{ board.owner }} </p>
+					<a class='owner' href='/whiteboard/{{ board.owner }}'> {{ board.owner }} </a>
 					<div class='frame' style='background: {{ board.frame }}; border-color: {{ board.border }}'>
 						<img class='thumbnail' src="{% static '240x160.png' %}">
 					</div>
@@ -112,6 +108,19 @@
 		padding-bottom: 20px;
 		margin: .66%;
 		cursor: pointer;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	
+	.board > .title, .board > .owner {
+		max-width: 90%;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		margin: auto;
+		margin-bottom: 10px;
+		margin-top: 10px;
+		display: block;
+		overflow: hidden;
 	}
 	
 	.frame {
@@ -140,14 +149,14 @@
 	}
 	
 	#sign-out {
-		background: #FFFDF8;
-		border: 2px solid #EEE9DE;
+		position: absolute;
+		float: left;
 		cursor: pointer;
-	}
-	
-	#sign-out p {
 		text-decoration: underline;
 		color: #EEE9DE;
+		margin: 0;
+		right: 140px;
+		top: 115px;
 	}
 	
 </style>
@@ -168,6 +177,13 @@ $(document).ready(function(){
 	})
 		.mouseleave(function(e){
 		$(e.currentTarget).css('border-bottom', '1px solid #00000000');
+	});
+	
+	$('.board > .owner').mouseenter(function(e){
+		$(e.currentTarget).css('text-decoration', 'underline');
+	})
+		.mouseleave(function(e){
+		$(e.currentTarget).css('text-decoration', 'none');
 	});
 	
 	$('#sign-out').click(function(e){

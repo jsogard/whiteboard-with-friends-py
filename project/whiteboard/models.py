@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils.timezone import now
+from datetime import datetime
 import hashlib
 
 # Create your models here.
@@ -21,13 +23,13 @@ class User(models.Model):
 		
 	
 class Board(models.Model):
-	owner = models.ForeignKey(User, on_delete=models.CASCADE)
+	owner = models.ForeignKey('User', on_delete=models.CASCADE)
 	title = models.CharField(max_length=50)
-	genesis = models.DateField()
-	updated = models.DateField()
+	genesis = models.DateTimeField(default=datetime.now(), blank=True)
+	updated = models.DateTimeField(auto_now=True)
 	
 	def __str__(self):
-		return { 'owner': self.owner, 'title': self.title, 'id': self.id }
+		return str.format('{}: \"{}\" by @{}', self.id, self.title, self.owner.username)
 	
 class Scheme(models.Model):
 	name = models.CharField(max_length=30, unique=True)
