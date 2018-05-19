@@ -23,13 +23,14 @@ class User(models.Model):
 		
 	
 class Board(models.Model):
-	owner = models.ForeignKey('User', on_delete=models.CASCADE)
+	user = models.ForeignKey('User', on_delete=models.CASCADE)
 	title = models.CharField(max_length=50)
+	scheme = models.ForeignKey('Scheme', on_delete=models.SET_DEFAULT, default=1)
 	genesis = models.DateTimeField(default=datetime.now(), blank=True)
 	updated = models.DateTimeField(auto_now=True)
 	
 	def __str__(self):
-		return str.format('{}: \"{}\" by @{}', self.id, self.title, self.owner.username)
+		return str.format('{}: \"{}\" by @{}', self.id, self.title, self.user.username)
 	
 class Scheme(models.Model):
 	name = models.CharField(max_length=30, unique=True)

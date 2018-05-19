@@ -79,7 +79,7 @@ def login(request):
 		u = User.objects.get(username=username)
 		
 		# check if password is correct
-		if u.password_hash != u.crypto(password=password):
+		if len(password) < 5 or u.password_hash != u.crypto(password=password):
 			responseJson['password'] = 'password incorrect'
 			return JsonResponse(responseJson)
 		
